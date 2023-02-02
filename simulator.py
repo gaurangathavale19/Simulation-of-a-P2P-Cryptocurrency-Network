@@ -55,45 +55,29 @@ if __name__ == "__main__":
     ##### Start 4 #####
 
     adj_matrix = [[0 for i in range(n)] for j in range(n)]
-    for i in range(n-1):
 
-        # to populate symmetrical elements
+    min1 = 4
+    max1 = min(n-1, 8)
+
+    for i in range(n):
         for j in range(i):
             adj_matrix[i][j] = adj_matrix[j][i]
-            print(i,j)
-
-        min1 = 4
-        max1 = 8
-        number_of_ones = adj_matrix[i].count(1)
-        print("rfrf", number_of_ones)
-        min1 -= number_of_ones
-        max1 -= number_of_ones
-        max1 = min(max1, n-i-1)
-        test = []
-        print('min1', min1)
-        print('max1', max1)
-        if(min1<0): min1 = 0
-        ones = random.randint(min1, max1)
-        print('ones', ones)
-        test = [1]*ones + [0]*(max1-ones)
+        number_of_ones = random.randint(min1, max1)
+        number_of_ones -= sum(adj_matrix[i])
+        test = [1]*number_of_ones + [0]*(n-i-1-number_of_ones)
         random.shuffle(test)
-
-        j = i+1
+        
+        j=i+1
         k=0
-        print(j)
-        print(len(test))
-        print(n)
         while(j<n):
             adj_matrix[i][j] = test[k]
             k += 1
             j += 1
-
-        print(adj_matrix)
-        print("########################################################")
-            
-    for j in range(n):
-            adj_matrix[n-1][j] = adj_matrix[j][n-1]
-            print(i,j)
+    
     print(adj_matrix)
+
+    
+
+
     ##### End 4 #####
 
