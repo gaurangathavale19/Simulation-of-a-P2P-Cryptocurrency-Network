@@ -1,8 +1,11 @@
 import argparse
 import random
 import numpy as np
+import hashlib
 from node import Node
+# from transaction import Transaction
 # nodes = []
+latencies = []
 
 
 # def sim():
@@ -19,12 +22,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ##### Start 1 #####
-
+    Ttx = 30
+    termination_time = 2000
     n = int(args.n_peers)
     z0 = int(args.slow_nodes)
     z1 = int(args.lowCPU_nodes)
     number_of_slow_nodes = int(n*z0/100)
     number_of_low_CPU_nodes = int(n*z1/100)
+    latencies = [[0 for i in range(n)] for j in range(n)]
 
     print('Number of nodes:', n)
     print('Number of slow nodes:', number_of_slow_nodes)
@@ -57,6 +62,31 @@ if __name__ == "__main__":
 
     ##### End 1 #####
 
+    ##### Start 2 #####
+
+    def generate_transaction_id(transaction_message, transaction_arrival_time):
+        transaction_id = hashlib.sha256((transaction_message + ' ' + str(transaction_arrival_time)).encode()).hexdigest()
+
+    def generate_transaction(Ttx, n, sender_id, current_time):
+        receiver_id = random.randint(0,n-1)
+        while(sender_id == receiver_id):
+            receiver_id = random.randint(0,n-1)
+        
+        coins = random.randint(1,nodes[sender_id].coins)
+        transaction_message = str(sender_id) + ' pays ' + str(receiver_id) + ' ' + str(coins) + ' coins'
+        transaction_arrival_time = np.random.exponential(Ttx) + current_time
+        transaction_id = generate_transaction_id(transaction_message, transaction_arrival_time)
+
+
+    ##### End 2 #####
+
+    ##### Start 3 #####
+
+    
+
+    ##### End 3 #####
+
+
     ##### Start 4 #####
 
     adj_matrix = [[0 for i in range(n)] for j in range(n)]
@@ -82,7 +112,9 @@ if __name__ == "__main__":
             k += 1
             j += 1
 
-    print(adj_matrix)
+    # print(adj_matrix)
+    for i in adj_matrix:
+        print(i)
 
     ##### End 4 #####
 
@@ -98,7 +130,7 @@ if __name__ == "__main__":
         # d from exponential dist with mean 96/c
         
         mean = 96 * 10**3 / c
-        d = np.random.exponential(mean, 1)[0]
+        d = np.random.exponential(mean)
 
         p = np.random.uniform(low=10, high=500)
 
@@ -106,13 +138,15 @@ if __name__ == "__main__":
         latency=p+m/c+d
 
         print('Latency from ' + str(sender_id) + ' to ' + str(receiver_id) + ':', latency)
+        return round(latency,2)
     
     for i in range(n-1):
         for j in range(i+1, n):
             if(adj_matrix[i][j] == 1):
                 message = 'TxnID: ' + str(i) + ' pays ' + str(j) + ' 10 coins'
-                send_message(message, i, j)
-        
+                latencies[i][j] = latencies[j][i] = send_message(message, i, j)
+
+    for i in latencies:
+        print(i)        
     ##### End 5 #####
 
-    
