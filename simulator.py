@@ -89,32 +89,62 @@ if __name__ == "__main__":
 
     ##### Start 4 #####
 
-    adj_matrix = [[0 for i in range(n)] for j in range(n)]
-
-    for i in range(n-1):
-        adj_matrix[i][i+1] = 1
-
-    min1 = 3
-    max1 = min(n-2, 7)
+    mat = {}
+    min1 = 4
+    max1 = min(n-1, 8)
 
     for i in range(n):
-        for j in range(i):
-            adj_matrix[i][j] = adj_matrix[j][i]
-        number_of_ones = random.randint(min1, max1)
-        number_of_ones -= sum(adj_matrix[i])
-        test = [1]*number_of_ones + [0]*(n-i-1-number_of_ones)
-        random.shuffle(test)
-        
-        j=i+2
-        k=0
-        while(j<n):
-            adj_matrix[i][j] = test[k]
-            k += 1
-            j += 1
+        mat[i] = []
 
-    # print(adj_matrix)
-    for i in adj_matrix:
-        print(i)
+    for i in range(n):
+        peers = random.randint(min1, max1)
+        # print('Peers:', peers)
+        if(len(mat[i]) >= peers):
+            continue
+        set1 = set()
+        if(len(mat[i]) > 0):
+            test = mat[i]
+            for e in test:
+                set1.add(e)
+        while(len(set1) < peers):
+            ans = False
+            # for j in range(i+1, n):
+            #     if(j not in set1):
+            #         ans = False
+            #         break
+            if(ans == False):
+                peer = random.randint(0, n-1)
+                while(len(mat[peer]) == 8):
+                    peer = random.randint(0, n-1)
+            # if(ans == True):
+            #     peer = random.randint(0,i)
+            #     while(len(mat[peer]) == 8):
+            #         peer = random.randint(0,i)
+            # print('PEER:', peer)
+            if(peer not in set1):
+                set1.add(peer)
+        # print(set1)
+        # print(i)
+        # print('Peer:',peer)
+        mat[i] = list(set1)
+        for ele in set1:
+            # if(ele in mat.keys()):
+            if(i not in mat[ele]):
+                list1 = mat[ele]
+                list1.append(i)
+                mat[ele] = list1
+            # else:
+            #     mat[ele] = [i]
+        
+        # print(mat)
+    print("wlrihwev")
+    adj_matrix = [[0 for _ in range(n)] for _ in range(n)]
+    for k,v in mat.items():
+        if(len(v) < 4 or len(v) > 8):
+            print(len(v))
+        for index in v:
+            adj_matrix[k][index] = 1
+
 
     ##### End 4 #####
 
@@ -137,7 +167,7 @@ if __name__ == "__main__":
         # latency
         latency=p+m/c+d
 
-        print('Latency from ' + str(sender_id) + ' to ' + str(receiver_id) + ':', latency)
+        # print('Latency from ' + str(sender_id) + ' to ' + str(receiver_id) + ':', latency)
         return round(latency,2)
     
     for i in range(n-1):
