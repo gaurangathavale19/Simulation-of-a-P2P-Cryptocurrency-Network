@@ -4,26 +4,21 @@ from event import Event
 class Node:
     # speed: slow = 0, fast = 1
     # computation_power: low = 0, high = 1
-    def __init__(self, node_id, speed, computation_power, simulator_global_time, transaction_list, next_mining_time):
+    def __init__(self, node_id, speed, computation_power, hashing_power, block_inter_arrival_mean_time, transaction_inter_arrival_mean_time, simulator_global_time, transaction_list, next_mining_time):
         self.node_id = node_id
         self.speed = speed
         self.computation_power = computation_power
-        self.block_inter_arrival_mean_time = 
+        self.block_inter_arrival_mean_time = block_inter_arrival_mean_time
+        self.transaction_inter_arrival_mean_time = transaction_inter_arrival_mean_time
+        self.hashing_power = hashing_power
 
         # added for maintaining blockchain
-        self.peer_balance = self.populate_peer_balance()
         self.next_mining_time = next_mining_time
         self.genesis_block = Block(creator_id=node_id, creation_time=simulator_global_time, transaction_list=transaction_list, previous_block_hash=0)
         self.blockchain_tree, self.candidate_blocks = self.initialize_blockchain()
         self.blocks = []
         self.unverified_blocks = {}
         pass
-    
-    def populate_peer_balance(self, transaction_list):
-        peer_balance = {}
-        for txn in transaction_list:
-            peer_balance[txn.receiver_id] = txn.coins
-        return peer_balance
 
     def initialize_blockchain(self):
         blockchain_tree = {}
@@ -34,7 +29,7 @@ class Node:
         if self.next_mining_time < event.event_start_time:
             return []
         events = []
-        events.append(Event(self.curr_mining_time,"Block",self.id,"all",None,self.id))
+        events.append(Event(curr_location=self.node_id, type="Block", event_start_time=self.next_mining_time,  sender_id=self.node_id, receiver_id="all", event_data=None))
         pass
 
     def receive_block(self, simulator_global_time, event):
