@@ -1,4 +1,5 @@
 class Event:
+
     def __init__(self, curr_location, type, event_data, sender_id, receiver_id, event_start_time):
         self.sender_id = sender_id
         self.receiver_id = receiver_id

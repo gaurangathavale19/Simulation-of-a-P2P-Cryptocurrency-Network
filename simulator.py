@@ -33,6 +33,7 @@ if __name__ == "__main__":
     latencies = [[0 for i in range(total_nodes)] for j in range(total_nodes)]
 
     print('Number of nodes:', total_nodes)
+
     print('Number of slow nodes:', number_of_slow_nodes)
     print('Number of low CPU nodes:', number_of_low_CPU_nodes)
 
@@ -42,6 +43,7 @@ if __name__ == "__main__":
 
     speeds = [0]*number_of_slow_nodes + [1]*(total_nodes - number_of_slow_nodes)
     computation_powers = [0]*number_of_low_CPU_nodes + [1]*(total_nodes - number_of_low_CPU_nodes)
+
     
     random.shuffle(speeds)
     random.shuffle(computation_powers)
@@ -63,6 +65,7 @@ if __name__ == "__main__":
         receiver_id = random.randint(0,total_nodes-1)
         while(sender_id == receiver_id):
             receiver_id = random.randint(0,total_nodes-1)
+
         
         coins = random.randint(1,nodes[sender_id].coins)
         transaction_message = str(sender_id) + ' pays ' + str(receiver_id) + ' ' + str(coins) + ' coins'
@@ -83,12 +86,14 @@ if __name__ == "__main__":
 
     mat = {}
     min1 = 4
+
     max1 = min(total_nodes-1, 8)
 
     for i in range(total_nodes):
         mat[i] = []
 
     for i in range(total_nodes):
+
         peers = random.randint(min1, max1)
         # print('Peers:', peers)
         if(len(mat[i]) >= peers):
@@ -108,6 +113,7 @@ if __name__ == "__main__":
                 peer = random.randint(0, total_nodes-1)
                 while(len(mat[peer]) == 8):
                     peer = random.randint(0, total_nodes-1)
+
             # if(ans == True):
             #     peer = random.randint(0,i)
             #     while(len(mat[peer]) == 8):
@@ -130,7 +136,9 @@ if __name__ == "__main__":
         
         # print(mat)
     print("wlrihwev")
+
     adj_matrix = [[0 for _ in range(total_nodes)] for _ in range(total_nodes)]
+
     for k,v in mat.items():
         if(len(v) < 4 or len(v) > 8):
             print(len(v))
@@ -162,8 +170,10 @@ if __name__ == "__main__":
         # print('Latency from ' + str(sender_id) + ' to ' + str(receiver_id) + ':', latency)
         return round(latency,2)
     
+
     for i in range(total_nodes-1):
         for j in range(i+1, total_nodes):
+
             if(adj_matrix[i][j] == 1):
                 message = 'TxnID: ' + str(i) + ' pays ' + str(j) + ' 10 coins'
                 latencies[i][j] = latencies[j][i] = send_message(message, i, j)
