@@ -87,12 +87,12 @@ class Node:
             if self.verify_block(block):
 
                 # Add it to the blockchain tree
-                self.self.blockchain_tree[block.block_id] = (block, blockchain_tree[block.previous_block_hash][1] + 1)
+                self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
 
                 # Update longest chain
-                if(longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
-                    longest_chain['block'] = block
-                    longest_chain['length'] = self.blockchain_tree[block.block_id][1]
+                if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
+                    self.longest_chain['block'] = block
+                    self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
         # Broadcast the blocks - to the node's peers
         self.broadcast_block(simulator_global_time, block, events=[])
@@ -104,10 +104,10 @@ class Node:
             for unverified_block in self.unverified_blocks:
                 if(unverified_block.previous_block_hash in self.blockchain_tree.keys()):
                     if self.verify_block(unverified_block):
-                        self.self.blockchain_tree[block.block_id] = (block, blockchain_tree[block.previous_block_hash][1] + 1)
-                        if(longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
-                            longest_chain['block'] = block
-                            longest_chain['length'] = self.blockchain_tree[block.block_id][1]
+                        self.self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
+                        if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
+                            self.longest_chain['block'] = block
+                            self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
                         del self.unverified_blocks[unverified_block['block_id']]
                         unverified_block_flag = True
                         break
@@ -146,15 +146,15 @@ class Node:
         
         # Remove the verified transactions from the unverified treansactions list
         for transaction in block_transactions:
-            if transaction.transaction_id in unverified_transactions.key():
-                del unverified_transactions[transaction.transaction_id]
+            if transaction.transaction_id in self.unverified_transactions.key():
+                del self.unverified_transactions[transaction.transaction_id]
         
         # Since the block is verified, add the block to the blockchain tree and update the longest chain length
-        self.blockchain_tree[block.block_id] = (block, blockchain_tree[block.previous_block_hash][1] + 1)
+        self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
 
         # Update the longest chain if new block added changes the longest chain length
-        if(longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
-            longest_chain['block'] = block
-            longest_chain['length'] = self.blockchain_tree[block.block_id][1]
+        if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
+            self.longest_chain['block'] = block
+            self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
         return True
