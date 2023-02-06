@@ -79,10 +79,42 @@ class Node:
         for peer in self.neighbours:
             delay = peer['propagation_delay']
             bottleneck_bandwidth = peer['bottleneck_bandwidth']
-            delay += (8*1000*len(block.transaction_list)/bottleneck_bandwidth)*1000 #in milliseconds
+            delay += (8*1000*len(block.transaction_list)/bottleneck_bandwidth)*1000 # in milliseconds
             delay += np.random.exponential((96*1000)/bottleneck_bandwidth)*1000 # d_ij in milliseconds
             event_list.append(Event(curr_location=peer['node']['node_id'], type="Block", event_data=None, sender_id=block.creator_id, receiver_id="all", event_start_time=simulator_global_time+delay))
         return event_list
 
-    def verify_block(self, simulator_global_time, block):
-        pass
+    def verify_block(self, block):
+        block_transactions = block.transaction_list
+        prev_block = self.blockchain_tree[block.previous_block_hash][0]
+        prev_peer_balance = prev_block.peer_balance
+
+        # For each transaction in the block, check if the sender's balance >= transaction amount (Using the parent/prev block's peer_balance)
+        for transaction in block_transactions:
+            if(transaction.transaction_type == 'payment'):
+                if(prev_peer_balance[transaction.sender_id] < transaction.coins):
+                    return False
+                else:
+                    prev_peer_balance[transaction.sender_id] -= transaction.coins
+                    prev_peer_balance[transaction.receiver_id] += transaction.coins
+            else:
+                prev_peer_balance[transaction.receiver_id] += transaction.coins
+        
+        # Check whether the peer_balance after applying transactions on prev_peer_balance is same as the one provided in the incoming block
+        if block.peer_balance != prev_peer_balance:      
+            return False
+        
+        # Remove the verified transactions from the unverified treansactions list
+        for transaction in block_transactions:
+            if transaction.transaction_id in unverified_transactions.key():
+                del unverified_transactions[transaction.transaction_id]
+        
+        # Since the block is verified, add the block to the blockchain tree and update the longest chain length
+        self.blockchain_tree[block.block_id] = (block, blockchain_tree[block.previous_block_hash][1] + 1)
+
+        # Update the longest chain if new block added changes the longest chain length
+        if(longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
+            longest_chain['block'] = block
+            longest_chain['length'] = self.blockchain_tree[block.block_id][1]
+
+        return True
