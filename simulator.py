@@ -7,7 +7,6 @@ import heapq
 from event import Event
 from block import Block
 from transaction import Transaction
-# from transaction import Transaction
 # nodes = []
 latencies = []
 global_queue=[]
@@ -24,22 +23,22 @@ if __name__ == "__main__":
     parser.add_argument('--slow_nodes', required=True, help='Enter the percentage of slow nodes')
     parser.add_argument('--lowCPU_nodes', required=True, help='Enter the percentage of low CPU nodes')
     parser.add_argument('--txn_mean_time', required=True, help='Enter interarrival mean time  between txn')
+    parser.add_argument('--termination_time', required=True, help='Enter the termination time of the simulation')
 
     args = parser.parse_args()
 
-
-
     ##### Start 1 #####
-    termination_time = 2000
-    n = int(args.n_peers)
+    txn_mean_time=int(args.txn_mean_time)
+    termination_time = int(args.termination_time)
+    total_nodes = int(args.n_peers)
     z0 = int(args.slow_nodes)
     z1 = int(args.lowCPU_nodes)
-    txn_mean_time=int(args.txn_mean_time)
-    number_of_slow_nodes = int(n*z0/100)
-    number_of_low_CPU_nodes = int(n*z1/100)
-    latencies = [[0 for i in range(n)] for j in range(n)]
+    number_of_slow_nodes = int(total_nodes*z0/100)
+    number_of_low_CPU_nodes = int(total_nodes*z1/100)
+    latencies = [[0 for i in range(total_nodes)] for j in range(total_nodes)]
 
-    print('Number of nodes:', n)
+    print('Number of nodes:', total_nodes)
+
     print('Number of slow nodes:', number_of_slow_nodes)
     print('Number of low CPU nodes:', number_of_low_CPU_nodes)
 
@@ -47,17 +46,9 @@ if __name__ == "__main__":
     computation_powers = []
     nodes = []
 
-    for i in range(n):
-        if(number_of_slow_nodes > 0):
-            speeds.append(0)
-            number_of_slow_nodes -= 1
-        else:
-            speeds.append(1)
-        if(number_of_low_CPU_nodes > 0):
-            computation_powers.append(0)
-            number_of_low_CPU_nodes -= 1
-        else:
-            computation_powers.append(1)
+    speeds = [0]*number_of_slow_nodes + [1]*(total_nodes - number_of_slow_nodes)
+    computation_powers = [0]*number_of_low_CPU_nodes + [1]*(total_nodes - number_of_low_CPU_nodes)
+
     
     random.shuffle(speeds)
     random.shuffle(computation_powers)
@@ -81,7 +72,6 @@ if __name__ == "__main__":
     ##### Start 2 #####
 
 
-
     ##### End 2 #####
 
     ##### Start 3 #####
@@ -95,12 +85,14 @@ if __name__ == "__main__":
 
     mat = {}
     min1 = 4
-    max1 = min(n-1, 8)
 
-    for i in range(n):
+    max1 = min(total_nodes-1, 8)
+
+    for i in range(total_nodes):
         mat[i] = []
 
-    for i in range(n):
+    for i in range(total_nodes):
+
         peers = random.randint(min1, max1)
         # print('Peers:', peers)
         if(len(mat[i]) >= peers):
@@ -117,9 +109,10 @@ if __name__ == "__main__":
             #         ans = False
             #         break
             if(ans == False):
-                peer = random.randint(0, n-1)
-                while(len(mat[peer]) == 8 or i==peer):
-                    peer = random.randint(0, n-1)
+                peer = random.randint(0, total_nodes-1)
+                while(len(mat[peer]) == 8):
+                    peer = random.randint(0, total_nodes-1)
+
             # if(ans == True):
             #     peer = random.randint(0,i)
             #     while(len(mat[peer]) == 8):
@@ -141,8 +134,10 @@ if __name__ == "__main__":
             #     mat[ele] = [i]
         
         # print(mat)
-    # print("wlrihwev")
-    adj_matrix = [[0 for _ in range(n)] for _ in range(n)]
+    print("wlrihwev")
+
+    adj_matrix = [[0 for _ in range(total_nodes)] for _ in range(total_nodes)]
+
     for k,v in mat.items():
         if(len(v) < 4 or len(v) > 8):
             print(len(v))
@@ -268,3 +263,4 @@ if __name__ == "__main__":
 
 
     # end6
+
