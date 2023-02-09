@@ -3,9 +3,13 @@ import random
 import numpy as np
 import hashlib
 from node import Node
-# from transaction import Transaction
+import heapq
+from event import Event
+from block import Block
+from transaction import Transaction
 # nodes = []
 latencies = []
+global_queue=[]
 
 
 # def sim():
@@ -18,13 +22,14 @@ if __name__ == "__main__":
     parser.add_argument('--n_peers', required=True, help='Enter number of nodes')
     parser.add_argument('--slow_nodes', required=True, help='Enter the percentage of slow nodes')
     parser.add_argument('--lowCPU_nodes', required=True, help='Enter the percentage of low CPU nodes')
+    parser.add_argument('--txn_mean_time', required=True, help='Enter interarrival mean time  between txn')
     parser.add_argument('--termination_time', required=True, help='Enter the termination time of the simulation')
 
     args = parser.parse_args()
 
     ##### Start 1 #####
-    Ttx = 30
-    termination_time = args.termination_time
+    txn_mean_time=int(args.txn_mean_time)
+    termination_time = int(args.termination_time)
     total_nodes = int(args.n_peers)
     z0 = int(args.slow_nodes)
     z1 = int(args.lowCPU_nodes)
@@ -48,29 +53,23 @@ if __name__ == "__main__":
     random.shuffle(speeds)
     random.shuffle(computation_powers)
 
-    for i in range(total_nodes):
-        nodes.append(Node(i, speeds[i], computation_powers[i]))
+    initial_txns=[]
+    for id in range(n):
+        coins=random.randint(20,40)
+        nodes.append(Node(id, speeds[id], computation_powers[id], coins))
+        # sender_id, receiver_id, coins, transaction_type, timestamp
+        txn=Transaction("coinbase",id,coins,"init",0)
+        initial_txns.append(txn)
 
-    for node in nodes:
-        print(node.node_id, node.speed, node.computation_power, node.coins)
+    for id in range(n):
+        nodes[id].genesis_block = Block(id,0,initial_txns,0)
+
+    # for node in nodes:
+    #     print(node.node_id, node.speed, node.computation_power, node.coins)
 
     ##### End 1 #####
 
     ##### Start 2 #####
-
-    def generate_transaction_id(transaction_message, transaction_arrival_time):
-        transaction_id = hashlib.sha256((transaction_message + ' ' + str(transaction_arrival_time)).encode()).hexdigest()
-
-    def generate_transaction(Ttx, total_nodes, sender_id, current_time):
-        receiver_id = random.randint(0,total_nodes-1)
-        while(sender_id == receiver_id):
-            receiver_id = random.randint(0,total_nodes-1)
-
-        
-        coins = random.randint(1,nodes[sender_id].coins)
-        transaction_message = str(sender_id) + ' pays ' + str(receiver_id) + ' ' + str(coins) + ' coins'
-        transaction_arrival_time = np.random.exponential(Ttx) + current_time
-        transaction_id = generate_transaction_id(transaction_message, transaction_arrival_time)
 
 
     ##### End 2 #####
@@ -144,41 +143,124 @@ if __name__ == "__main__":
             print(len(v))
         for index in v:
             adj_matrix[k][index] = 1
+    # print(adj_matrix)
+    # for i in adj_matrix:
+    #     print(i)
+
+    ##### End 4 ####
 
 
-    ##### End 4 #####
+    #start 5a
 
-    ##### Start 5 #####
-    def send_message(message, sender_id, receiver_id):
-        if(nodes[sender_id].speed == 1 and nodes[receiver_id].speed == 1):
-            c = 100 * 10**6
+    ## Initializing neighbours of each node
+    latency_matrix=[[0 for i in range(n)] for i in range(n)]
+    for i in range(0,n):
+        neighbour_list=[]
+        for j in range(0,n):
+            if(adj_matrix[i][j]):
+                peer_inf={}
+                if(latency_matrix[j][i]==0):
+                    peer_inf['propogation_delay']=(np.random.uniform(low=10, high=500))/1000  #todo
+                    latency_matrix[i][j]=peer_inf['propogation_delay']
+                else:
+                    peer_inf['propogation_delay']=latency_matrix[j][i]
+                peer_inf['node']=nodes[j]
+                peer_inf['nodeid']=j
+                if nodes[i].speed==1 and nodes[j].speed==1:
+                    peer_inf['bottlenext_bandwidth']=100
+                else:
+                    peer_inf['bottlenext_bandwidth']=50
+
+                neighbour_list.append(peer_inf)
+                    
+        nodes[i].neighbours=neighbour_list
+        # print(nodes[i].neighbours)
+    #end 5a
+
+
+    #start5b
+
+    
+    number_of_high_nodes=n-number_of_low_CPU_nodes
+    low_hk=1/(number_of_low_CPU_nodes+10*(number_of_high_nodes))
+    high_hk=10*low_hk
+
+    for i in range(n):
+        if nodes[i].computation_power:
+            nodes[i].hashing_power=high_hk
         else:
-            c = 5 * 10**6
-       
-        m = len(message)
+            nodes[i].hashing_power=low_hk
 
-        # d from exponential dist with mean 96/c
-        
-        mean = 96 * 10**3 / c
-        d = np.random.exponential(mean)
 
-        p = np.random.uniform(low=10, high=500)
+    #start5b
 
-        # latency
-        latency=p+m/c+d
+    #end5b
 
-        # print('Latency from ' + str(sender_id) + ' to ' + str(receiver_id) + ':', latency)
-        return round(latency,2)
+
+    #start 5c
+
+    current_time=0
+
+    ###initializing first txn
+
     
 
-    for i in range(total_nodes-1):
-        for j in range(i+1, total_nodes):
+    for id in range(n):
+        new_event=nodes[id].generate_transaction(n,current_time,txn_mean_time)
+        heapq.heappush(global_queue,new_event)
+    '''
+    for id in range(n):
+        #todo interblock_arrival_time?
+        interblock_arrival_time=10
+        d = np.random.exponential(interblock_arrival_time,1)
+        nodes[id].block_curr_mine_time=d+current_time
+        new_event=Event(nodes[i],"BLK",None,nodes[i],"all",current_time+d)
+        heapq.heappush(global_queue,new_event)
+    '''
+    ##end 5c
 
-            if(adj_matrix[i][j] == 1):
-                message = 'TxnID: ' + str(i) + ' pays ' + str(j) + ' 10 coins'
-                latencies[i][j] = latencies[j][i] = send_message(message, i, j)
 
-    for i in latencies:
-        print(i)        
-    ##### End 5 #####
+    #start 6
+    termination_time=100
+    # heapq.heappush(global_queue,)
+    while(current_time<termination_time):
+        curr_event=heapq.heappop(global_queue)
+        if curr_event.type=="BLK":
+            pass
+            # curr_node_id=curr_node.node_id
+            # event_content=curr_event.content
+            # sender_id=curr_event.sender_id
+            # if curr_node== sender_id:
+            #     events_generated=curr_node.create_block(current_time,curr_event)
+            # else:
+            #     events_generated=curr_node.recieve_block(current_time,event_content)
+        else:
+            curr_node=curr_event.curr_node
+            curr_node_id=curr_node.node_id
+            event_content=curr_event.event_data
+            sender_id=curr_event.sender_id
+            current_time=curr_event.event_start_time
+            print(current_time," ",curr_node_id," ",event_content.transaction_message," ",sender_id)
+            events_generated=curr_node.get_transactions(current_time,event_content)
+
+            if curr_node_id == sender_id:
+                new_event=curr_node.generate_transaction(n,current_time,txn_mean_time)
+                events_generated.append(new_event)
+
+        for event in events_generated:
+            heapq.heappush(global_queue,event)
+
+
+
+            
+
+
+            
+
+
+        
+        
+
+
+    # end6
 
