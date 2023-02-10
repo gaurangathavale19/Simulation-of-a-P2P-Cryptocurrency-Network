@@ -165,7 +165,7 @@ class Node:
         if block.block_id in self.blocks:
             return []
         
-        self.blocks.add(block.id)
+        self.blocks.add(block.block_id)
         block.peers_visited.append(self.node_id)
 
         previous_block_hash = block.previous_block_hash
@@ -237,7 +237,7 @@ class Node:
         
         # Remove the verified transactions from the unverified treansactions list
         for transaction in block_transactions:
-            if transaction.transaction_id in self.unverified_txn.key():
+            if transaction.transaction_id in self.unverified_txn.keys():
                 del self.unverified_txn[transaction.transaction_id]
         
         # Since the block is verified, add the block to the blockchain tree and update the longest chain length

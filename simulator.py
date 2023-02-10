@@ -246,9 +246,9 @@ if __name__ == "__main__":
             event_content = curr_event.event_data
             sender_id = curr_event.sender_id
             if curr_node_id == sender_id:
-                events_generated = curr_node.generate_block(simulator_global_time, curr_event)
+                events_generated = nodes[curr_node_id].generate_block(simulator_global_time, curr_event)
             else:
-                events_generated = curr_node.receive_block(simulator_global_time, event_content)
+                events_generated = nodes[curr_node_id].receive_block(simulator_global_time, event_content)
             print("BLK:", simulator_global_time, curr_node_id, sender_id)
         else:
             curr_node = curr_event.curr_node
