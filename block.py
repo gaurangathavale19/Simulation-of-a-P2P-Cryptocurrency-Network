@@ -7,6 +7,7 @@ class Block:
         self.previous_block_hash = previous_block_hash
         self.peer_balance = peer_balance
         self.block_id = self.set_id()
+        self.peers_visited = []
 
     def set_id(self):
         result = " ".join([txn.transaction_message for txn in self.transaction_list]) + " " + str(self.previous_block_hash)

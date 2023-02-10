@@ -126,13 +126,12 @@ class Node:
         graph.render('results/'+str(self.node_id),view=True)
     
     def generate_block(self, simulator_global_time, event):
-        # if self.next_mining_time < event.event_start_time: # need to analyze this once
-        if self.next_mining_time != event.event_start_time: # need to analyze this once
+        if self.next_mining_time < event.event_start_time: # need to analyze this once
+        # if self.next_mining_time != event.event_start_time: # need to analyze this once
             return []
         events = []
 
         self.next_mining_time = simulator_global_time + np.random.exponential(self.block_inter_arrival_mean_time/self.hashing_power) # need to analyze this once
-        
         
         valid_txns = []
         parent_block = self.longest_chain
@@ -153,6 +152,7 @@ class Node:
         valid_txns.append(Transaction(sender_id="coinbase", receiver_id=self.node_id, coins=50, transaction_type="mines", timestamp=simulator_global_time)) # mining reward is 50
         peer_balance[self.node_id] += 50
         block = Block(creator_id=self.node_id , creation_time=event.event_start_time, peer_balance=peer_balance, transaction_list=valid_txns, previous_block_hash=parent_block['block'].block_id) # need to understand creation_time=event.event_start_time
+        block.peers_visited.append(self.node_id)
         events.append(Event(curr_node=self.node_id, type="BLK", event_data=None, sender_id=self.node_id, receiver_id="all", event_start_time=self.next_mining_time))
         self.blockchain_tree[block.block_id] = (block, parent_block['length']+1)
         self.longest_chain = {'block': block, 'length': parent_block['length']+1}
@@ -166,6 +166,7 @@ class Node:
             return []
         
         self.blocks.add(block.id)
+        block.peers_visited.append(self.node_id)
 
         previous_block_hash = block.previous_block_hash
 
@@ -185,34 +186,33 @@ class Node:
                     self.longest_chain['block'] = block
                     self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
-        # Broadcast the blocks - to the node's peers
-        self.broadcast_block(simulator_global_time, block, events=[])
-
         unverified_block_flag = True
 
         while(unverified_block_flag):
-
             for unverified_block in self.unverified_blocks:
                 if(unverified_block.previous_block_hash in self.blockchain_tree.keys()):
                     if self.verify_block(unverified_block):
-                        self.self.blockchain_tree[block.block_id] = (block, blockchain_tree[block.previous_block_hash][1] + 1)
-                        if(longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
-                            longest_chain['block'] = block
-                            longest_chain['length'] = self.blockchain_tree[block.block_id][1]
+                        self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
+                        if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
+                            self.longest_chain['block'] = block
+                            self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
                         del self.unverified_blocks[unverified_block['block_id']]
                         unverified_block_flag = True
                         break
 
                 unverified_block_flag = False
-    
+        
+        # Broadcast the blocks - to the node's peers
+        return self.broadcast_block(simulator_global_time, block, events=[])
 
     def broadcast_block(self, simulator_global_time, block, event_list):
         for peer in self.neighbours:
-            delay = peer['propagation_delay']
-            bottleneck_bandwidth = peer['bottleneck_bandwidth']
-            delay += (8*1000*len(block.transaction_list)/bottleneck_bandwidth)*1000 # in milliseconds
-            delay += np.random.exponential((96*1000)/bottleneck_bandwidth)*1000 # d_ij in milliseconds
-            event_list.append(Event(curr_node=peer['node'].node_id, type="BLK", event_data=block, sender_id=block.creator_id, receiver_id="all", event_start_time=simulator_global_time+delay))
+            if peer not in block.peers_visited:
+                delay = peer['propagation_delay']
+                bottleneck_bandwidth = peer['bottleneck_bandwidth']
+                delay += (8*1000*len(block.transaction_list)/bottleneck_bandwidth)*1000 # in milliseconds
+                delay += np.random.exponential((96*1000)/bottleneck_bandwidth)*1000 # d_ij in milliseconds
+                event_list.append(Event(curr_node=peer['node'].node_id, type="BLK", event_data=block, sender_id=block.creator_id, receiver_id="all", event_start_time=simulator_global_time+delay))
         return event_list
 
     def verify_block(self, block):
@@ -237,15 +237,15 @@ class Node:
         
         # Remove the verified transactions from the unverified treansactions list
         for transaction in block_transactions:
-            if transaction.transaction_id in unverified_transactions.key():
-                del unverified_transactions[transaction.transaction_id]
+            if transaction.transaction_id in self.unverified_txn.key():
+                del self.unverified_txn[transaction.transaction_id]
         
         # Since the block is verified, add the block to the blockchain tree and update the longest chain length
-        self.blockchain_tree[block.block_id] = (block, blockchain_tree[block.previous_block_hash][1] + 1)
+        self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
 
         # Update the longest chain if new block added changes the longest chain length
-        if(longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
-            longest_chain['block'] = block
-            longest_chain['length'] = self.blockchain_tree[block.block_id][1]
+        if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
+            self.longest_chain['block'] = block
+            self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
         return True

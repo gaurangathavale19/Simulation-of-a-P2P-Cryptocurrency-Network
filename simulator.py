@@ -208,7 +208,7 @@ if __name__ == "__main__":
                 if nodes[i].speed==1 and nodes[j].speed==1:
                     peer_inf['bottleneck_bandwidth']=100
                 else:
-                    peer_inf['bottleneck_bandwidth']=50
+                    peer_inf['bottleneck_bandwidth']=5
 
                 neighbour_list.append(peer_inf)
                     
@@ -224,11 +224,11 @@ if __name__ == "__main__":
     for id in range(total_nodes):
         #todo interblock_arrival_time?
         # new_event=Event(nodes[id],"BLK",None,nodes[i],"all",simulator_global_time+d)
-        new_event = Event(curr_node=nodes[id], type="BLK", event_data=None, sender_id=nodes[id], receiver_id="all", event_start_time=nodes[id].next_mining_time)
+        new_event = Event(curr_node=nodes[id].node_id, type="BLK", event_data=None, sender_id=nodes[id].node_id, receiver_id="all", event_start_time=nodes[id].next_mining_time)
         heapq.heappush(global_queue, new_event)
     
     for i in global_queue:
-        print(i.type)
+        print(i.type, i.event_start_time)
     ##end 5c
 
 
@@ -242,22 +242,21 @@ if __name__ == "__main__":
         # print(curr_event.type)
         if curr_event.type == "BLK":
             # pass
-            curr_node = curr_event.curr_node
-            curr_node_id = curr_node.node_id
+            curr_node_id = curr_event.curr_node
             event_content = curr_event.event_data
             sender_id = curr_event.sender_id
             if curr_node_id == sender_id:
                 events_generated = curr_node.generate_block(simulator_global_time, curr_event)
             else:
                 events_generated = curr_node.receive_block(simulator_global_time, event_content)
-            print("BLK:", simulator_global_time)
+            print("BLK:", simulator_global_time, curr_node_id, sender_id)
         else:
             curr_node = curr_event.curr_node
             curr_node_id = curr_node.node_id
             event_content = curr_event.event_data
             sender_id = curr_event.sender_id
             simulator_global_time = curr_event.event_start_time
-            print("TXN:", simulator_global_time, " ", curr_node_id, " ", event_content.transaction_message, " ", sender_id)
+            # print("TXN:", simulator_global_time, " ", curr_node_id, " ", event_content.transaction_message, " ", sender_id)
             events_generated = curr_node.get_transactions(simulator_global_time, event_content)
 
             if curr_node_id == sender_id:
