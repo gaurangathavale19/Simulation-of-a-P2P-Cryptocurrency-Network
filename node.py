@@ -178,12 +178,12 @@ class Node:
             if self.verify_block(block):
 
                 # Add it to the blockchain tree
-                self.self.blockchain_tree[block.block_id] = (block, blockchain_tree[block.previous_block_hash][1] + 1)
+                self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
 
                 # Update longest chain
-                if(longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
-                    longest_chain['block'] = block
-                    longest_chain['length'] = self.blockchain_tree[block.block_id][1]
+                if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
+                    self.longest_chain['block'] = block
+                    self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
         # Broadcast the blocks - to the node's peers
         self.broadcast_block(simulator_global_time, block, events=[])
