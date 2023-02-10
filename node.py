@@ -210,8 +210,8 @@ class Node:
             if peer not in block.peers_visited:
                 delay = peer['propagation_delay']
                 bottleneck_bandwidth = peer['bottleneck_bandwidth']
-                delay += (8*1000*len(block.transaction_list)/bottleneck_bandwidth)*1000 # in milliseconds
-                delay += np.random.exponential((96*1000)/bottleneck_bandwidth)*1000 # d_ij in milliseconds
+                delay += (8*1000*len(block.transaction_list)/(bottleneck_bandwidth * 10**6)) # in seconds
+                delay += np.random.exponential((96*1000)/(bottleneck_bandwidth * 10**6)) # d_ij in seconds
                 event_list.append(Event(curr_node=peer['node'].node_id, type="BLK", event_data=block, sender_id=block.creator_id, receiver_id="all", event_start_time=simulator_global_time+delay))
         return event_list
 
