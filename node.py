@@ -47,6 +47,7 @@ class Node:
         
         coins = random.randint(1,self.coins)
         generated_event_time = np.random.exponential(txn_mean_time) + current_time  #todo
+        print('Transaction generation:', generated_event_time)
         txn=Transaction(sender_id,receiver_id,coins,"payment",generated_event_time)
         event=Event(self,"TXN",txn,sender_id,receiver_id,generated_event_time)
         return event
@@ -132,7 +133,7 @@ class Node:
         events = []
 
         self.next_mining_time = simulator_global_time + np.random.exponential(self.block_inter_arrival_mean_time/self.hashing_power) # need to analyze this once
-        
+        print('Transaction generation:', self.next_mining_time)
         valid_txns = []
         parent_block = self.longest_chain
         peer_balance = parent_block['block'].peer_balance
@@ -160,6 +161,7 @@ class Node:
         return self.broadcast_block(simulator_global_time, block, events)
 
     def receive_block(self, simulator_global_time, block):
+        print('inside receive block')
         
         # Check if the block is seen earlier - to avoid loop
         if block.block_id in self.blocks:
@@ -167,8 +169,12 @@ class Node:
         
         self.blocks.add(block.block_id)
         block.peers_visited.append(self.node_id)
+        # print(block)
 
         previous_block_hash = block.previous_block_hash
+
+        print(previous_block_hash)
+        # print(self.blockchain_tree.keys())
 
         # Check if the incoming block's previous_hash is present in the blockchain tree
         if previous_block_hash not in self.blockchain_tree.keys():
@@ -177,9 +183,14 @@ class Node:
         else:
             # Check the validity of blocks, if verified, then: 
             if self.verify_block(block):
+                print('done with verify block')
+                print(block.peer_balance)
+                for txn in block.transaction_list:
+                    print(txn.sender_id, txn.coins)
 
                 # Add it to the blockchain tree
                 self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
+                # print(self.blockchain_tree)
 
                 # Update longest chain
                 if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
@@ -187,23 +198,26 @@ class Node:
                     self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
         unverified_block_flag = True
+        # print(self.unverified_blocks)
 
-        while(unverified_block_flag):
-            for unverified_block in self.unverified_blocks:
+        while(unverified_block_flag and len(self.unverified_blocks)!=0):
+            # print(self.unverified_blocks)
+            for unverified_block_id, unverified_block in self.unverified_blocks.items():
                 if(unverified_block.previous_block_hash in self.blockchain_tree.keys()):
                     if self.verify_block(unverified_block):
                         self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
                         if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
                             self.longest_chain['block'] = block
                             self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
-                        del self.unverified_blocks[unverified_block['block_id']]
+                        del self.unverified_blocks[unverified_block_id]
                         unverified_block_flag = True
                         break
 
                 unverified_block_flag = False
+            print('stuck')
         
         # Broadcast the blocks - to the node's peers
-        return self.broadcast_block(simulator_global_time, block, events=[])
+        return self.broadcast_block(simulator_global_time, block, event_list=[])
 
     def broadcast_block(self, simulator_global_time, block, event_list):
         for peer in self.neighbours:
