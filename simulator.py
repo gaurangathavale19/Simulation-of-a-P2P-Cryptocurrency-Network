@@ -186,6 +186,7 @@ if __name__ == "__main__":
         nodes[id].genesis_block = Block(creator_id=nodes[id].node_id, creation_time=simulator_global_time, peer_balance=populate_peer_balance(initial_txns), transaction_list=initial_txns, previous_block_hash=0)
         nodes[id].blockchain_tree = nodes[i].candidate_blocks = initialize_blockchain(nodes[id].genesis_block)
         nodes[id].longest_chain = {'block': nodes[id].genesis_block, 'length': 1}
+        nodes[id].block_arrival_timing = { nodes[id].genesis_block['block_id'] : simulator_global_time}
         # nodes[id].genesis_block = Block(id,0,initial_txns,0)
     
     #start 5a
