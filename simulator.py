@@ -89,8 +89,10 @@ if __name__ == "__main__":
 
     mat = {}
     min1 = 4
+#     min1 = 1
 
     max1 = min(total_nodes-1, 8)
+#     max1 = min(total_nodes-1, 4)
 
     for i in range(total_nodes):
         mat[i] = []
@@ -219,7 +221,7 @@ if __name__ == "__main__":
 
 
     for id in range(total_nodes):
-        new_event=nodes[id].generate_transaction(total_nodes, simulator_global_time, txn_mean_time)
+        new_event=nodes[id].generate_transaction(n=total_nodes, current_time=simulator_global_time, txn_mean_time=txn_mean_time)
         heapq.heappush(global_queue,new_event)
     
     for id in range(total_nodes):
@@ -227,11 +229,11 @@ if __name__ == "__main__":
         # new_event=Event(nodes[id],"BLK",None,nodes[i],"all",simulator_global_time+d)
         new_event = Event(curr_node=nodes[id].node_id, type="BLK", event_data=None, sender_id=nodes[id].node_id, receiver_id="all", event_start_time=nodes[id].next_mining_time)
         heapq.heappush(global_queue, new_event)
-    
+
     for i in global_queue:
         print(i.type, i.event_start_time)
     ##end 5c
-
+    # quit()
 
 
 
@@ -240,11 +242,13 @@ if __name__ == "__main__":
     # print(simulator_global_time)
     # heapq.heappush(global_queue,)
     while(simulator_global_time<termination_time):
-        print(simulator_global_time)
+        # print(simulator_global_time)
         # print(termination_time)
         curr_event = heapq.heappop(global_queue)
         simulator_global_time = curr_event.event_start_time
+        print("Current start time:",curr_event.event_start_time)
         # print(curr_event.type)
+
         if curr_event.type == "BLK":
             # pass
             curr_node_id = curr_event.curr_node
@@ -264,18 +268,21 @@ if __name__ == "__main__":
             curr_node_id = curr_node.node_id
             event_content = curr_event.event_data
             sender_id = curr_event.sender_id
+            print(sender_id)
+            print(curr_event.event_data.coins)
             # simulator_global_time = curr_event.event_start_time
             #print("TXN:", simulator_global_time, " ", curr_node_id, " ", event_content.transaction_message, " ", sender_id)
             events_generated = curr_node.get_transactions(simulator_global_time, event_content)
 
             if curr_node_id == sender_id:
                 new_event = curr_node.generate_transaction(total_nodes, simulator_global_time, txn_mean_time)
+                # simulator_global_time = new_event.event_start_time
                 events_generated.append(new_event)
 
         for event in events_generated:
             heapq.heappush(global_queue,event)
     
-    #print('Reached termination time')
+    print('Reached termination time')
     for node in nodes:
         # #print(count,len(node.non_verfied_transaction), len(node.all_transaction), len(node.block_tree), node.longest_chain[1], len(node.all_block_ids.keys()),sep='\t\t')
         ##print(node.genesis_block.id)
