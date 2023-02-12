@@ -105,7 +105,7 @@ class Node:
         # if self.next_mining_time != event.event_start_time: # need to analyze this once
             self.next_mining_time = simulator_global_time + np.random.exponential(self.block_inter_arrival_mean_time/self.hashing_power) # need to analyze this once
             return [Event(curr_node=self.node_id, type="BLK", event_data=None, sender_id=self.node_id, receiver_id="all", event_start_time=self.next_mining_time)]
-        
+            # return []
         events = []
         print(self.hashing_power)
         exp_time = np.random.exponential(self.block_inter_arrival_mean_time)
@@ -133,13 +133,11 @@ class Node:
                 del self.unverfied_transactions[txn_id]
             if len(valid_txns) == 999: # 1000th Transaction would be added as mining reward
                 break
-
         valid_txns.append(Transaction(sender_id="coinbase", receiver_id=self.node_id, coins=50, transaction_type="mines", timestamp=simulator_global_time)) # mining reward is 50
         peer_balance[self.node_id] += 50
         block = Block(creator_id=self.node_id , creation_time=event.event_start_time, peer_balance=peer_balance, transaction_list=valid_txns, previous_block_hash=parent_block['block'].block_id) # need to understand creation_time=event.event_start_time
         block.peers_visited.append(self.node_id)
         events.append(Event(curr_node=self.node_id, type="BLK", event_data=None, sender_id=self.node_id, receiver_id="all", event_start_time=self.next_mining_time))
-
         self.blockchain_tree[block.block_id] = (block, parent_block['length']+1)
         self.longest_chain = {'block': block, 'length': parent_block['length']+1}
         self.block_arrival_timing[block.block_id] = simulator_global_time
@@ -177,7 +175,7 @@ class Node:
                     print(transaction.sender_id, transaction.receiver_id, transaction.coins)
                     print(block.peer_balance)
                     if(transaction.transaction_type == 'payment'):
-                        
+
                         block.peer_balance[transaction.sender_id] -= transaction.coins
                         block.peer_balance[transaction.receiver_id] += transaction.coins
 
@@ -227,9 +225,7 @@ class Node:
                 delay += (8*1000*len(block.transaction_list)/(bottleneck_bandwidth * 10**6)) # in seconds
                 delay += np.random.exponential((96*1000)/(bottleneck_bandwidth * 10**6)) # d_ij in seconds
                 event_list.append(Event(curr_node=peer['node'].node_id, type="BLK", event_data=block, sender_id=block.creator_id, receiver_id="all", event_start_time=simulator_global_time+delay))
-        # print('done with broadcast:', simulator_global_time)
         return event_list
-        # return []
 
     def verify_block(self, block):
         block_transactions = block.transaction_list
