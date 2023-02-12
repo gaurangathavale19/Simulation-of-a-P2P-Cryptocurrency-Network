@@ -48,7 +48,7 @@ class Node:
         
         coins = random.randint(1,self.coins)
         generated_event_time = np.random.exponential(txn_mean_time) + current_time  #todo
-        print('Transaction generation:', current_time)
+        # print('Transaction generation:', current_time)
         txn=Transaction(sender_id,receiver_id,coins,"payment",generated_event_time)
         event=Event(self,"TXN",txn,sender_id,receiver_id,generated_event_time)
         return event
@@ -93,39 +93,7 @@ class Node:
         return new_events_generated
 
 
-    def visualize(self):
-        block_map={}
-        id_to_count = {}
-        node_counter=0
 
-        for block_id,(block,_) in self.block_tree.items():
-            prev_block_hash=block.prev_block_hash
-            block_map.setdefault(prev_block_hash,{})[block_id]=block
-
-
-        graph = Graph('block_parent', filename=str(self.node_id))
-        graph.attr(rankdir='LR', splines='line')
-        hash_queue=Queue()
-        hash_queue.put(0)
-
-        while not hash_queue.empty():
-            queue_size=hash_queue.qsize()
-            t=Graph('child')
-            for i in range(queue_size):
-                parent_hash=hash_queue.get()
-                for child_id,block in block_map.get(parent_hash,{}).items():
-                    t.node(str(node_counter))
-                    node_counter_str=str(node_counter)
-                    id_to_count[child_id]=node_counter_str
-                    if not parent_hash:
-                        graph.edge(node_counter_str,id_to_count[block.prev_block_hash])
-                    node_counter=node_counter+1
-                    if child_id in block_map:
-                        hash_queue.put(child_id)
-
-            graph.subgraph(t)
-
-        graph.render('results/'+str(self.node_id),view=True)
     
     def generate_block(self, simulator_global_time, event):
         if self.next_mining_time < event.event_start_time: # need to analyze this once
@@ -134,7 +102,7 @@ class Node:
         events = []
 
         self.next_mining_time = simulator_global_time + np.random.exponential(self.block_inter_arrival_mean_time/self.hashing_power) # need to analyze this once
-        print('Transaction generation:', self.next_mining_time)
+        # print('Transaction generation:', self.next_mining_time)
         valid_txns = []
         parent_block = self.longest_chain
         peer_balance = parent_block['block'].peer_balance
@@ -163,7 +131,7 @@ class Node:
         return self.broadcast_block(simulator_global_time, block, events)
 
     def receive_block(self, simulator_global_time, block):
-        print('inside receive block')
+        #print('inside receive block')
         
         # Check if the block is seen earlier - to avoid loop
         if block.block_id in self.blocks:
@@ -175,7 +143,7 @@ class Node:
 
         previous_block_hash = block.previous_block_hash
 
-        print(previous_block_hash)
+        # print(previous_block_hash)
         # print(self.blockchain_tree.keys())
 
         # Check if the incoming block's previous_hash is present in the blockchain tree
@@ -185,10 +153,10 @@ class Node:
         else:
             # Check the validity of blocks, if verified, then: 
             if self.verify_block(block):
-                print('done with verify block')
-                print(block.peer_balance)
-                for txn in block.transaction_list:
-                    print(txn.sender_id, txn.coins)
+                #print('done with verify block')
+                #print(block.peer_balance)
+                # for txn in block.transaction_list:
+                #     print(txn.sender_id, txn.coins)
 
                 # Add it to the blockchain tree
                 self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
@@ -218,7 +186,7 @@ class Node:
                         break
 
                 unverified_block_flag = False
-            print('stuck')
+            #print('stuck')
         
         # Broadcast the blocks - to the node's peers
         return self.broadcast_block(simulator_global_time, block, event_list=[])
@@ -267,3 +235,42 @@ class Node:
         #     self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
         return True
+
+    def visualize(self):
+        print("visualize")
+        block_map={}
+        id_to_count = {}
+        node_counter=0
+        hash_queue=Queue()
+        hash_queue.put(0)
+        g=Graph('parent',filename=str(self.node_id))
+        node_counter = 0
+        id_to_count = {}
+
+        print(self.blockchain_tree)
+
+        for block_id,(block,_) in self.blockchain_tree.items():
+            previous_block_hash=block.previous_block_hash
+            block_map.setdefault(previous_block_hash,{})[block_id]=block
+
+
+        g.attr(rankdir='LR',splines='line')
+        while not hash_queue.empty():
+            size=hash_queue.qsize()
+            t=Graph('child')
+            
+            for i in range(size):
+                parent_hash = hash_queue.get()
+                parent_hash_dict=block_map[parent_hash]
+                for id,block in parent_hash_dict.items():
+                    node_counter_str=str(node_counter)
+                    t.node(node_counter_str)
+                    id_to_count[id]=node_counter_str
+                    if id in block_map:
+                        hash_queue.put(id)
+                    if parent_hash!=0:
+                        hash_prev_block=block.previous_block_hash
+                        g.edge(node_counter_str,id_to_count[hash_prev_block])
+                    node_counter=node_counter+1
+            g.subgraph(t)
+        g.render('results/'+str(self.node_id),view=True) 

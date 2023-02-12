@@ -138,7 +138,7 @@ if __name__ == "__main__":
             #     mat[ele] = [i]
         
         # print(mat)
-    print("wlrihwev")
+    #print("wlrihwev")
 
     adj_matrix = [[0 for _ in range(total_nodes)] for _ in range(total_nodes)]
 
@@ -237,11 +237,11 @@ if __name__ == "__main__":
 
     #start 6
     # termination_time=100
-    print(simulator_global_time)
+    # print(simulator_global_time)
     # heapq.heappush(global_queue,)
     while(simulator_global_time<termination_time):
         print(simulator_global_time)
-        print(termination_time)
+        # print(termination_time)
         curr_event = heapq.heappop(global_queue)
         simulator_global_time = curr_event.event_start_time
         # print(curr_event.type)
@@ -250,22 +250,22 @@ if __name__ == "__main__":
             curr_node_id = curr_event.curr_node
             event_content = curr_event.event_data
             sender_id = curr_event.sender_id
-            print("BLK:", simulator_global_time, curr_node_id, sender_id)
+            #print("BLK:", simulator_global_time, curr_node_id, sender_id)
             # simulator_global_time = curr_event.event_start_time
             if curr_node_id == sender_id:
                 events_generated = nodes[curr_node_id].generate_block(simulator_global_time, curr_event)
                 # simulator_global_time += next_mining_time
-                print('Done with generate block')
+                # print('Done with generate block')
             else:
                 events_generated = nodes[curr_node_id].receive_block(simulator_global_time, event_content)
-                print('Done with receive block')
+                #print('Done with receive block')
         else:
             curr_node = curr_event.curr_node
             curr_node_id = curr_node.node_id
             event_content = curr_event.event_data
             sender_id = curr_event.sender_id
             # simulator_global_time = curr_event.event_start_time
-            print("TXN:", simulator_global_time, " ", curr_node_id, " ", event_content.transaction_message, " ", sender_id)
+            #print("TXN:", simulator_global_time, " ", curr_node_id, " ", event_content.transaction_message, " ", sender_id)
             events_generated = curr_node.get_transactions(simulator_global_time, event_content)
 
             if curr_node_id == sender_id:
@@ -275,8 +275,11 @@ if __name__ == "__main__":
         for event in events_generated:
             heapq.heappush(global_queue,event)
     
-    print('Reached termination time')
-
+    #print('Reached termination time')
+    for node in nodes:
+        # #print(count,len(node.non_verfied_transaction), len(node.all_transaction), len(node.block_tree), node.longest_chain[1], len(node.all_block_ids.keys()),sep='\t\t')
+        ##print(node.genesis_block.id)
+        node.visualize()
 
 
             
