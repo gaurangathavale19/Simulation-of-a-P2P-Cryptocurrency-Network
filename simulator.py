@@ -169,7 +169,8 @@ if __name__ == "__main__":
             hashing_power_list.append(high_hk)
         else:
             hashing_power_list.append(low_hk)
-
+    # print("hashing_power_list: ",hashing_power_list)
+    # exit()
     initial_txns=[]
     for id in range(total_nodes):
         coins=random.randint(20,40)
@@ -240,10 +241,11 @@ if __name__ == "__main__":
     # print(simulator_global_time)
     # heapq.heappush(global_queue,)
     while(simulator_global_time<termination_time):
-        print(simulator_global_time)
+        
         # print(termination_time)
         curr_event = heapq.heappop(global_queue)
         simulator_global_time = curr_event.event_start_time
+        print(curr_event.type, simulator_global_time)
         # print(curr_event.type)
         if curr_event.type == "BLK":
             # pass
