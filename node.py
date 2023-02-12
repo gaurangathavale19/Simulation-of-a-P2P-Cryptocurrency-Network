@@ -48,7 +48,7 @@ class Node:
         
         coins = random.randint(1,self.coins)
         generated_event_time = np.random.exponential(txn_mean_time) + current_time  #todo
-        print('Transaction generation:', generated_event_time)
+        print('Transaction generation:', current_time)
         txn=Transaction(sender_id,receiver_id,coins,"payment",generated_event_time)
         event=Event(self,"TXN",txn,sender_id,receiver_id,generated_event_time)
         return event
@@ -158,7 +158,7 @@ class Node:
         events.append(Event(curr_node=self.node_id, type="BLK", event_data=None, sender_id=self.node_id, receiver_id="all", event_start_time=self.next_mining_time))
         self.blockchain_tree[block.block_id] = (block, parent_block['length']+1)
         self.longest_chain = {'block': block, 'length': parent_block['length']+1}
-        self.block_arrival_timing[block['block_id']] = simulator_global_time
+        self.block_arrival_timing[block.block_id] = simulator_global_time
         self.blocks.add(block.block_id)
         return self.broadcast_block(simulator_global_time, block, events)
 
@@ -192,7 +192,7 @@ class Node:
 
                 # Add it to the blockchain tree
                 self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
-                self.block_arrival_timing[block['block_id']] = simulator_global_time
+                self.block_arrival_timing[block.block_id] = simulator_global_time
                 # print(self.blockchain_tree)
 
                 # Update longest chain
@@ -209,7 +209,7 @@ class Node:
                 if(unverified_block.previous_block_hash in self.blockchain_tree.keys()):
                     if self.verify_block(unverified_block):
                         self.blockchain_tree[unverified_block.block_id] = (unverified_block, self.blockchain_tree[unverified_block.previous_block_hash][1] + 1)
-                        self.block_arrival_timing[unverified_block['block_id']] = simulator_global_time
+                        self.block_arrival_timing[unverified_block.block_id] = simulator_global_time
                         if(self.longest_chain['length'] < self.blockchain_tree[unverified_block.block_id][1]):
                             self.longest_chain['block'] = unverified_block
                             self.longest_chain['length'] = self.blockchain_tree[unverified_block.block_id][1]
