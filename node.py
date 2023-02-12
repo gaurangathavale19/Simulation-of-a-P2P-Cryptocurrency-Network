@@ -255,11 +255,11 @@ class Node:
                 del self.unverified_txn[transaction.transaction_id]
         
         # Since the block is verified, add the block to the blockchain tree and update the longest chain length
-        self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
+        # self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
 
         # Update the longest chain if new block added changes the longest chain length
-        if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
-            self.longest_chain['block'] = block
-            self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
+        # if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
+        #     self.longest_chain['block'] = block
+        #     self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
         return True
