@@ -6,6 +6,9 @@ from node import Node
 import heapq
 from event import Event
 from block import Block
+import time
+from datetime import datetime
+import os
 from transaction import Transaction
 # nodes = []
 latencies = []
@@ -25,7 +28,7 @@ def initialize_blockchain(genesis_block):
 # def sim():
 if __name__ == "__main__":
     # global nodes
-
+    then = time.time()
     # Command line arguments
     parser = argparse.ArgumentParser()
 
@@ -38,6 +41,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    folder = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    os.mkdir(str(folder))
+    os.mkdir(str(folder) + '/results')
+    os.mkdir(str(folder) + '/loggers')
+    os.mkdir(str(folder) + '/loggers/block')
+    os.mkdir(str(folder) + '/loggers/transaction')
+
     ##### Start 1 #####
     simulator_global_time = 0
     txn_mean_time = int(args.txn_mean_time)
@@ -49,6 +59,12 @@ if __name__ == "__main__":
     number_of_slow_nodes = int(total_nodes*z0/100)
     number_of_low_CPU_nodes = int(total_nodes*z1/100)
     latencies = [[0 for i in range(total_nodes)] for j in range(total_nodes)]
+
+    file_name = str(folder) + '/run_configurations.txt'
+    f = open(file_name, 'w')
+    line = "No. of nodes: {}\nSlow percentage nodes: {}\nLow CPU percentage nodes: {}\nMean transaction interarrival time: {}\nMean block interarrival time: {}\nTermination time: {}".format(total_nodes, z0, z1, txn_mean_time, block_inter_arrival_mean_time, termination_time)
+    f.write(line)
+    f.close()
 
     print('Number of nodes:', total_nodes)
 
@@ -234,13 +250,13 @@ if __name__ == "__main__":
 
 
 
-
+    # quit()
     #start 6
     # termination_time=100
     # print(simulator_global_time)
     # heapq.heappush(global_queue,)
     while(simulator_global_time<termination_time):
-        print(simulator_global_time)
+        # print(simulator_global_time)
         # print(termination_time)
         curr_event = heapq.heappop(global_queue)
         simulator_global_time = curr_event.event_start_time
@@ -264,8 +280,8 @@ if __name__ == "__main__":
             curr_node_id = curr_node.node_id
             event_content = curr_event.event_data
             sender_id = curr_event.sender_id
-            print(sender_id)
-            print(curr_event.event_data.coins)
+            # print(sender_id)
+            # print(curr_event.event_data.coins)
             # simulator_global_time = curr_event.event_start_time
             #print("TXN:", simulator_global_time, " ", curr_node_id, " ", event_content.transaction_message, " ", sender_id)
             events_generated = curr_node.get_transactions(simulator_global_time, event_content)
@@ -276,14 +292,35 @@ if __name__ == "__main__":
 
         for event in events_generated:
             heapq.heappush(global_queue,event)
-    
+
     print('Reached termination time')
+    print((time.time() - then)/60)
     for node in nodes:
         # #print(count,len(node.non_verfied_transaction), len(node.all_transaction), len(node.block_tree), node.longest_chain[1], len(node.all_block_ids.keys()),sep='\t\t')
         ##print(node.genesis_block.id)
-        node.visualize()
+        node.visualize(folder)
 
+    for node in nodes:
+        file_name = str(folder) + '/loggers/{}/log_' + str(node.node_id) + '_{}.txt'
+        f = open(file_name.format('block','block'), 'w')
+        line = "Block ID\tBlock arrival time\tNo. of transactions\tPeer Balance\n"
+        f.write(line)
+        for block_id, block in node.blockchain_tree.items():
+            line = "{}\t{}\t{}\t{}\n".format(block_id, node.block_arrival_timing[block_id], len(block[0].transaction_list), block[0].peer_balance)
+            # print(line)
+            f.write(line)
+        f.close()
 
+        f = open(file_name.format('transaction', 'transaction'), 'w')
+        line = "Transaction ID\tTransaction Type\tTimestamp\tSender\tReceiver\tAmount (in BTC)\n"
+        f.write(line)
+        for txn in node.genesis_block.transaction_list:
+            line = "{}\t{}\t{}\t{}\t{}\t{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
+            f.write(line)
+        for txn in node.verified_transactions:
+            line = "{}\t{}\t{}\t{}\t{}\t{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
+            f.write(line)
+        f.close()
             
 
 

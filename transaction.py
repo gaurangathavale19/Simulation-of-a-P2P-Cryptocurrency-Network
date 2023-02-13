@@ -13,5 +13,5 @@ class Transaction:
         else:
 
             self.transaction_message = "{} init {} coins".format(receiver_id, coins)
-        self.transaction_id = hashlib.sha256((str(timestamp)+self.transaction_message).encode('utf-8')).hexdigest
+        self.transaction_id = hashlib.sha256((str(timestamp)+self.transaction_message).encode('utf-8')).hexdigest()
 
