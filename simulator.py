@@ -10,6 +10,8 @@ import time
 from datetime import datetime
 import os
 from transaction import Transaction
+import networkx as nx
+import matplotlib.pyplot as plt
 # nodes = []
 latencies = []
 global_queue=[]
@@ -248,7 +250,17 @@ if __name__ == "__main__":
         print(i.type, i.event_start_time)
     ##end 5c
 
+    G = nx.Graph()
+    node_colors = []
+    for node in nodes:
+        node_colors.append('green' if node.computation_power else 'red')
+        for adj_vertex in node.neighbours:
+            edge_color = 'green' if adj_vertex['bottleneck_bandwidth']==100 else 'red'
+            G.add_edge(node.node_id, adj_vertex['node_id'], color=edge_color, weight=10)
 
+    edge_colors = nx.get_edge_attributes(G,'color').values()
+    nx.draw(G, edge_color=edge_colors, node_color=node_colors, with_labels=True, font_color='white')
+    plt.savefig('./{}/network_topology.png'.format(str(folder)), dpi=300, bbox_inches='tight')
 
     # quit()
     #start 6
@@ -301,24 +313,24 @@ if __name__ == "__main__":
         node.visualize(folder)
 
     for node in nodes:
-        file_name = str(folder) + '/loggers/{}/log_' + str(node.node_id) + '_{}.txt'
+        file_name = str(folder) + '/loggers/{}/log_' + str(node.node_id) + '_{}.csv'
         f = open(file_name.format('block','block'), 'w')
-        line = "Block ID\tBlock arrival time\tNo. of transactions\tPeer Balance\n"
+        line = "Block ID,Block arrival time,No. of transactions,Peer Balance\n"
         f.write(line)
         for block_id, block in node.blockchain_tree.items():
-            line = "{}\t{}\t{}\t{}\n".format(block_id, node.block_arrival_timing[block_id], len(block[0].transaction_list), block[0].peer_balance)
+            line = "{},{},{},{}\n".format(block_id, node.block_arrival_timing[block_id], len(block[0].transaction_list), block[0].peer_balance)
             # print(line)
             f.write(line)
         f.close()
 
         f = open(file_name.format('transaction', 'transaction'), 'w')
-        line = "Transaction ID\tTransaction Type\tTimestamp\tSender\tReceiver\tAmount (in BTC)\n"
+        line = "Transaction ID,Transaction Type,Timestamp,Sender,Receiver,Amount (in BTC)\n"
         f.write(line)
         for txn in node.genesis_block.transaction_list:
-            line = "{}\t{}\t{}\t{}\t{}\t{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
+            line = "{},{},{},{},{},{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
             f.write(line)
         for txn in node.verified_transactions:
-            line = "{}\t{}\t{}\t{}\t{}\t{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
+            line = "{},{},{},{},{},{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
             f.write(line)
         f.close()
             
