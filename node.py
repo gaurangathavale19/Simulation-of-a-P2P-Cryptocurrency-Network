@@ -325,4 +325,4 @@ class Node:
                         g.edge(id_to_count[hash_prev_block],node_counter_str)
                     node_counter=node_counter+1
             # g.subgraph(t)
-        g.render(folder + '/results/'+str(self.node_id),view=True) 
+        g.render(folder + '/results/'+str(self.node_id),view=False) 
