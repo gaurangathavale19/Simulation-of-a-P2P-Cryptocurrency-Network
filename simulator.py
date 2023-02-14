@@ -12,6 +12,7 @@ import os
 from transaction import Transaction
 import networkx as nx
 import matplotlib.pyplot as plt
+import copy
 # nodes = []
 latencies = []
 global_queue=[]
@@ -27,9 +28,7 @@ def initialize_blockchain(genesis_block):
     blockchain_tree[genesis_block.block_id] = (genesis_block, 1)
     return blockchain_tree # this will also be the candidate block
 
-# def sim():
 if __name__ == "__main__":
-    # global nodes
     then = time.time()
     # Command line arguments
     parser = argparse.ArgumentParser()
@@ -67,12 +66,12 @@ if __name__ == "__main__":
     high_hk=10*low_hk
 
     file_name = str(folder) + '/run_configurations.txt'
-    f = open(file_name, 'w')
+    file = open(file_name, 'w')
     line = "No. of nodes: {}\nSlow percentage nodes: {}\nNo. of slow nodes: {}\nLow CPU percentage nodes: {}\nNo. of low CPU nodes: {}\nMean transaction interarrival time: {}\nMean block interarrival time: {}\nTermination time: {}".format(total_nodes, z0, number_of_slow_nodes, z1, number_of_low_CPU_nodes, txn_mean_time, block_inter_arrival_mean_time, termination_time)
-    f.write(line)
+    file.write(line)
     line = "\nHigh CPU nodes hashing power: {}\nLow CPU nodes hashing power: {}\n".format(high_hk, low_hk)
-    f.write(line)
-    f.close()
+    file.write(line)
+    file.close()
 
     print('Number of nodes:', total_nodes)
 
@@ -89,27 +88,6 @@ if __name__ == "__main__":
     
     random.shuffle(speeds)
     random.shuffle(computation_powers)
-
-    
-
-    # for node in nodes:
-    #     print(node.node_id, node.speed, node.computation_power, node.coins)
-
-    ##### End 1 #####
-
-    ##### Start 2 #####
-
-
-    ##### End 2 #####
-
-    ##### Start 3 #####
-
-    
-
-    ##### End 3 #####
-
-
-    ##### Start 4 #####
 
     mat = {}
     min1 = 4
@@ -132,20 +110,10 @@ if __name__ == "__main__":
                 set1.add(e)
         while(len(set1) < peers):
             ans = False
-            # for j in range(i+1, n):
-            #     if(j not in set1):
-            #         ans = False
-            #         break
             if(ans == False):
                 peer = random.randint(0, total_nodes-1)
                 while(len(mat[peer]) == 8 or i==peer):
                     peer = random.randint(0, total_nodes-1)
-
-            # if(ans == True):
-            #     peer = random.randint(0,i)
-            #     while(len(mat[peer]) == 8):
-            #         peer = random.randint(0,i)
-            # print('PEER:', peer)
             if(peer not in set1):
                 set1.add(peer)
         # print(set1)
@@ -153,16 +121,10 @@ if __name__ == "__main__":
         # print('Peer:',peer)
         mat[i] = list(set1)
         for ele in set1:
-            # if(ele in mat.keys()):
             if(i not in mat[ele]):
                 list1 = mat[ele]
                 list1.append(i)
                 mat[ele] = list1
-            # else:
-            #     mat[ele] = [i]
-        
-        # print(mat)
-    #print("wlrihwev")
 
     adj_matrix = [[0 for _ in range(total_nodes)] for _ in range(total_nodes)]
 
@@ -176,12 +138,6 @@ if __name__ == "__main__":
     for i in adj_matrix:
         # print(i)
         pass
-
-    ##### End 4 ####
-
-
-
-    #start5b
 
     hashing_power_list = []
 
@@ -208,9 +164,6 @@ if __name__ == "__main__":
         nodes[id].blockchain_tree = nodes[i].candidate_blocks = initialize_blockchain(nodes[id].genesis_block)
         nodes[id].longest_chain = {'block': nodes[id].genesis_block, 'length': 1}
         nodes[id].block_arrival_timing = { nodes[id].genesis_block.block_id : simulator_global_time}
-        # nodes[id].genesis_block = Block(id,0,initial_txns,0)
-    
-    #start 5a
 
 
     ## Initializing neighbours of each node
@@ -265,12 +218,6 @@ if __name__ == "__main__":
     nx.draw(G, edge_color=edge_colors, node_color=node_colors, with_labels=True, font_color='white')
     plt.savefig('./{}/network_topology.png'.format(str(folder)), dpi=300, bbox_inches='tight')
 
-    # quit()
-    #start 6
-    # termination_time=100
-    # print(simulator_global_time)
-    # heapq.heappush(global_queue,)
-
     file_name = str(folder) + '/events.csv'
     events_log_file = open(file=file_name, mode='w')
     line = "Event type,Event start time,sender_node,receiver_node,current_node\n"
@@ -323,7 +270,7 @@ if __name__ == "__main__":
             heapq.heappush(global_queue,event)
 
     print('Reached termination time')
-    print((time.time() - then)/60)
+    print('Simulation time in seconds:',time.time() - then)
     for node in nodes:
         # #print(count,len(node.non_verfied_transaction), len(node.all_transaction), len(node.block_tree), node.longest_chain[1], len(node.all_block_ids.keys()),sep='\t\t')
         ##print(node.genesis_block.id)
@@ -333,35 +280,40 @@ if __name__ == "__main__":
             pass
 
     for node in nodes:
+ 
+        generated_blocks = len(node.generated_blocks)
+        count_of_generated_blocks_in_longest_blockchain = node.get_count_of_generated_blocks_in_longest_blockchain()
+        if(generated_blocks != 0):
+            print("Node", node.node_id, ":", count_of_generated_blocks_in_longest_blockchain/generated_blocks)
+            fraction_of_generated_blocks_in_longest_blockchain = count_of_generated_blocks_in_longest_blockchain/generated_blocks
+        else:
+            print('Node', node.node_id, ': No blocks generated')
+            fraction_of_generated_blocks_in_longest_blockchain = 'No blocks generated'
+
         file_name = str(folder) + '/loggers/{}/log_' + str(node.node_id) + '_{}.tsv'
-        f = open(file_name.format('block','block'), 'w')
+        file = open(file_name.format('block','block'), 'w')
+        line = "Ratio of the number of blocks generated by each node in the Longest Chain of the tree to the total number of blocks it generates\t{}\n".format(fraction_of_generated_blocks_in_longest_blockchain) 
+        file.write(line)
+        if(node.speed == 1): line = "Fast Node\n" 
+        else: line = "Slow Node\n"
+        if(node.computation_power == 1): line += "High CPU Node\n" 
+        else: line += "Low CPU Node\n"
+        file.write(line)
         line = "Block ID\tBlock arrival time\tNo. of transactions\tPeer Balance\n"
-        f.write(line)
+        file.write(line)
         for block_id, block in node.blockchain_tree.items():
             line = "{}\t{}\t{}\t{}\n".format(block_id, node.block_arrival_timing[block_id], len(block[0].transaction_list), block[0].peer_balance)
             # print(line)
-            f.write(line)
-        f.close()
+            file.write(line)
+        file.close()
 
-        f = open(file_name.format('transaction', 'transaction'), 'w')
+        file = open(file_name.format('transaction', 'transaction'), 'w')
         line = "Transaction ID\tTransaction Type\tTimestamp\tSender\tReceiver\tAmount (in BTC)\n"
-        f.write(line)
+        file.write(line)
         for txn in node.genesis_block.transaction_list:
             line = "{}\t{}\t{}\t{}\t{}\t{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
-            f.write(line)
+            file.write(line)
         for txn in node.verified_transactions:
             line = "{}\t{}\t{}\t{}\t{}\t{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
-            f.write(line)
-        f.close()
-            
-
-
-            
-
-
-        
-        
-
-
-    # end6
-
+            file.write(line)
+        file.close()

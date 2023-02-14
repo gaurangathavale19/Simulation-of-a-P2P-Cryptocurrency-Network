@@ -40,6 +40,7 @@ class Node:
         # self.hashing_power=None
         self.transactions=None
         self.block_arrival_timing={}
+        self.generated_blocks = set()
 
      
     def generate_transaction(self, n, current_time,txn_mean_time):
@@ -113,7 +114,7 @@ class Node:
             # return []
         events = []
         # print(self.hashing_power)
-        exp_time = np.random.exponential(self.block_inter_arrival_mean_time)
+        exp_time = np.random.exponential(self.block_inter_arrival_mean_time/self.hashing_power)
         # print('Mining exp_time:', exp_time)
         # print(simulator_global_time)
         self.next_mining_time = simulator_global_time + exp_time # need to analyze this once
@@ -149,6 +150,7 @@ class Node:
         valid_txns.append(Transaction(sender_id="coinbase", receiver_id=self.node_id, coins=50, transaction_type="mines", timestamp=simulator_global_time)) # mining reward is 50
         parent_peer_balance[self.node_id] += 50
         block = Block(creator_id=self.node_id , creation_time=event.event_start_time, peer_balance=parent_peer_balance, transaction_list=valid_txns, previous_block_hash=parent_block['block'].block_id) # need to understand creation_time=event.event_start_time
+        self.generated_blocks.add(block.block_id)
         # print(block.peer_balance)
         block.peers_visited.append(self.node_id)
         events.append(Event(curr_node=self.node_id, type="BLK", event_data=None, sender_id=self.node_id, receiver_id="all", event_start_time=self.next_mining_time))
@@ -183,21 +185,6 @@ class Node:
             ans = self.verify_block(block) 
             # print(ans)
             if ans:
-                #print('done with verify block')
-                #print(block.peer_balance)
-                # for txn in block.transaction_list:
-                #     print(txn.sender_id, txn.coins)
-                # for transaction in block.transaction_list:
-                #     print(transaction.sender_id, transaction.receiver_id, transaction.coins)
-                #     if(transaction.transaction_type == 'payment'):
-
-                #         block.peer_balance[transaction.sender_id] -= transaction.coins
-                #         block.peer_balance[transaction.receiver_id] += transaction.coins
-
-                # print(block.peer_balance)
-                # if(len(block.transaction_list) > 1):
-                #     quit()
-
                 # Add it to the blockchain tree
                 self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
                 self.block_arrival_timing[block.block_id] = simulator_global_time
@@ -287,6 +274,16 @@ class Node:
         #     self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
         return True
+    
+    def get_count_of_generated_blocks_in_longest_blockchain(self):
+        count = 0
+        last_block_in_blockchain_tree = copy.deepcopy(self.longest_chain['block'])
+        while(last_block_in_blockchain_tree.previous_block_hash != 0):
+            # print(self.generated_blocks)
+            if(last_block_in_blockchain_tree.block_id in self.generated_blocks):
+                count += 1
+            last_block_in_blockchain_tree = self.blockchain_tree[last_block_in_blockchain_tree.previous_block_hash][0]
+        return count
 
     def visualize(self, folder):
         # print("visualize")
