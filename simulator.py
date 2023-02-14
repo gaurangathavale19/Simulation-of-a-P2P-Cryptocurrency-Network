@@ -62,9 +62,15 @@ if __name__ == "__main__":
     number_of_low_CPU_nodes = int(total_nodes*z1/100)
     latencies = [[0 for i in range(total_nodes)] for j in range(total_nodes)]
 
+    number_of_high_nodes=total_nodes-number_of_low_CPU_nodes
+    low_hk=1/(number_of_low_CPU_nodes+10*(number_of_high_nodes))
+    high_hk=10*low_hk
+
     file_name = str(folder) + '/run_configurations.txt'
     f = open(file_name, 'w')
-    line = "No. of nodes: {}\nSlow percentage nodes: {}\nLow CPU percentage nodes: {}\nMean transaction interarrival time: {}\nMean block interarrival time: {}\nTermination time: {}".format(total_nodes, z0, z1, txn_mean_time, block_inter_arrival_mean_time, termination_time)
+    line = "No. of nodes: {}\nSlow percentage nodes: {}\nNo. of slow nodes: {}\nLow CPU percentage nodes: {}\nNo. of low CPU nodes: {}\nMean transaction interarrival time: {}\nMean block interarrival time: {}\nTermination time: {}".format(total_nodes, z0, number_of_slow_nodes, z1, number_of_low_CPU_nodes, txn_mean_time, block_inter_arrival_mean_time, termination_time)
+    f.write(line)
+    line = "\nHigh CPU nodes hashing power: {}\nLow CPU nodes hashing power: {}\n".format(high_hk, low_hk)
     f.write(line)
     f.close()
 
@@ -176,11 +182,6 @@ if __name__ == "__main__":
 
 
     #start5b
-
-    
-    number_of_high_nodes=total_nodes-number_of_low_CPU_nodes
-    low_hk=1/(number_of_low_CPU_nodes+10*(number_of_high_nodes))
-    high_hk=10*low_hk
 
     hashing_power_list = []
 
@@ -332,24 +333,24 @@ if __name__ == "__main__":
             pass
 
     for node in nodes:
-        file_name = str(folder) + '/loggers/{}/log_' + str(node.node_id) + '_{}.csv'
+        file_name = str(folder) + '/loggers/{}/log_' + str(node.node_id) + '_{}.tsv'
         f = open(file_name.format('block','block'), 'w')
-        line = "Block ID,Block arrival time,No. of transactions,Peer Balance\n"
+        line = "Block ID\tBlock arrival time\tNo. of transactions\tPeer Balance\n"
         f.write(line)
         for block_id, block in node.blockchain_tree.items():
-            line = "{},{},{},{}\n".format(block_id, node.block_arrival_timing[block_id], len(block[0].transaction_list), block[0].peer_balance)
+            line = "{}\t{}\t{}\t{}\n".format(block_id, node.block_arrival_timing[block_id], len(block[0].transaction_list), block[0].peer_balance)
             # print(line)
             f.write(line)
         f.close()
 
         f = open(file_name.format('transaction', 'transaction'), 'w')
-        line = "Transaction ID,Transaction Type,Timestamp,Sender,Receiver,Amount (in BTC)\n"
+        line = "Transaction ID\tTransaction Type\tTimestamp\tSender\tReceiver\tAmount (in BTC)\n"
         f.write(line)
         for txn in node.genesis_block.transaction_list:
-            line = "{},{},{},{},{},{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
+            line = "{}\t{}\t{}\t{}\t{}\t{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
             f.write(line)
         for txn in node.verified_transactions:
-            line = "{},{},{},{},{},{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
+            line = "{}\t{}\t{}\t{}\t{}\t{}\n".format(txn.transaction_id, txn.transaction_type, txn.timestamp, txn.sender_id, txn.receiver_id, txn.coins)
             f.write(line)
         f.close()
             
