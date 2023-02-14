@@ -162,12 +162,14 @@ if __name__ == "__main__":
 
     for k,v in mat.items():
         if(len(v) < 4 or len(v) > 8):
-            print(len(v))
+            # print(len(v))
+            pass
         for index in v:
             adj_matrix[k][index] = 1
     # print(adj_matrix)
     for i in adj_matrix:
-        print(i)
+        # print(i)
+        pass
 
     ##### End 4 ####
 
@@ -267,6 +269,12 @@ if __name__ == "__main__":
     # termination_time=100
     # print(simulator_global_time)
     # heapq.heappush(global_queue,)
+
+    file_name = str(folder) + '/events.csv'
+    events_log_file = open(file=file_name, mode='w')
+    line = "Event type,Event start time,sender_node,receiver_node,current_node\n"
+    events_log_file.write(line)
+
     while(simulator_global_time<termination_time):
         # print(simulator_global_time)
         # print(termination_time)
@@ -278,6 +286,10 @@ if __name__ == "__main__":
             curr_node_id = curr_event.curr_node
             event_content = curr_event.event_data
             sender_id = curr_event.sender_id
+
+            line = "{},{},{},{},{}\n".format(curr_event.type,curr_event.event_start_time,sender_id,curr_event.receiver_id,curr_node_id)
+            events_log_file.write(line)
+
             #print("BLK:", simulator_global_time, curr_node_id, sender_id)
             # simulator_global_time = curr_event.event_start_time
             if curr_node_id == sender_id:
@@ -292,6 +304,10 @@ if __name__ == "__main__":
             curr_node_id = curr_node.node_id
             event_content = curr_event.event_data
             sender_id = curr_event.sender_id
+
+            line = "{},{},{},{},{}\n".format(curr_event.type,curr_event.event_start_time,sender_id,curr_event.receiver_id,curr_node_id)
+            events_log_file.write(line)
+
             # print(sender_id)
             # print(curr_event.event_data.coins)
             # simulator_global_time = curr_event.event_start_time
@@ -310,7 +326,10 @@ if __name__ == "__main__":
     for node in nodes:
         # #print(count,len(node.non_verfied_transaction), len(node.all_transaction), len(node.block_tree), node.longest_chain[1], len(node.all_block_ids.keys()),sep='\t\t')
         ##print(node.genesis_block.id)
-        node.visualize(folder)
+        try:
+            node.visualize(folder)
+        except Exception as e:
+            pass
 
     for node in nodes:
         file_name = str(folder) + '/loggers/{}/log_' + str(node.node_id) + '_{}.csv'

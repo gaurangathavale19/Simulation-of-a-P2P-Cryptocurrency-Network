@@ -142,14 +142,14 @@ class Node:
             if len(valid_txns) == 999: # 1000th Transaction would be added as mining reward
                 break
         self.verified_transactions += valid_txns
-        print(parent_peer_balance)
-        print('VALID:', len(valid_txns))
+        # print(parent_peer_balance)
+        # print('VALID:', len(valid_txns))
         for i in to_be_deleted:
             del self.unverified_txn[i]
         valid_txns.append(Transaction(sender_id="coinbase", receiver_id=self.node_id, coins=50, transaction_type="mines", timestamp=simulator_global_time)) # mining reward is 50
         parent_peer_balance[self.node_id] += 50
         block = Block(creator_id=self.node_id , creation_time=event.event_start_time, peer_balance=parent_peer_balance, transaction_list=valid_txns, previous_block_hash=parent_block['block'].block_id) # need to understand creation_time=event.event_start_time
-        print(block.peer_balance)
+        # print(block.peer_balance)
         block.peers_visited.append(self.node_id)
         events.append(Event(curr_node=self.node_id, type="BLK", event_data=None, sender_id=self.node_id, receiver_id="all", event_start_time=self.next_mining_time))
         self.blockchain_tree[block.block_id] = (block, parent_block['length']+1)
@@ -181,7 +181,7 @@ class Node:
         else:
             # Check the validity of blocks, if verified, then:
             ans = self.verify_block(block) 
-            print(ans)
+            # print(ans)
             if ans:
                 #print('done with verify block')
                 #print(block.peer_balance)
@@ -258,7 +258,7 @@ class Node:
                 previous_peer_balance[transaction.sender_id] -= transaction.coins
                 previous_peer_balance[transaction.receiver_id] += transaction.coins
             else:
-                print(transaction.coins)
+                # print(transaction.coins)
                 previous_peer_balance[transaction.receiver_id] += transaction.coins
         
         # print(previous_peer_balance)
@@ -289,7 +289,7 @@ class Node:
         return True
 
     def visualize(self, folder):
-        print("visualize")
+        # print("visualize")
         block_map={}
         id_to_count = {}
         node_counter=0
