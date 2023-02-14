@@ -316,13 +316,22 @@ class Node:
                 parent_hash_dict=block_map[parent_hash]
                 for id,block in parent_hash_dict.items():
                     node_counter_str=str(node_counter)
-                    g.node(node_counter_str)
-                    id_to_count[id]=node_counter_str
+                    # node_counter_str=str(block.block_id[:4])
+                    if(node_counter==0):
+                        g.node("G")
+                        id_to_count[id]="G"
+
+                    else:
+                        g.node(node_counter_str)
+                        id_to_count[id]=node_counter_str
+
                     if id in block_map:
                         hash_queue.put(id)
                     if parent_hash!=0:
                         hash_prev_block=block.previous_block_hash
                         g.edge(id_to_count[hash_prev_block],node_counter_str)
+                    else:
+                        g.node('G')
                     node_counter=node_counter+1
             # g.subgraph(t)
         g.render(folder + '/results/'+str(self.node_id),view=False) 
