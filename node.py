@@ -292,7 +292,7 @@ class Node:
         node_counter=0
         hash_queue=Queue()
         hash_queue.put(0)
-        g=Graph('parent',filename=str(self.node_id))
+        g=Graph('parent',filename=str(self.node_id),node_attr={'shape':'box'})
         node_counter = 0
         id_to_count = {}
 
