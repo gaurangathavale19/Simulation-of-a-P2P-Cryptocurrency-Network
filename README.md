@@ -8,7 +8,7 @@
   - <b>lowCPU_nodes</b>: Percentage of low CPU nodes/peers
   - <b>txn_mean_time</b>: Mean interarrival time between transactions
   - <b>blk_mean_time</b>: Mean interarrival time between blocks
-  - <b>terminations_time</b>: The time after which the simulation will come to an halt
+  - <b>termination_time</b>: The time after which the simulation will come to an halt
  - Command to run: 
    `python simulator.py --n_peers <n_peers> --slow_nodes <slow_nodes> --lowCPU_nodes <lowCPU_nodes> --txn_mean_time <txn_mean_time> --blk_mean_time <blk_mean_time> --termination_time <termination_time>`
  - For instance: `python simulator.py --n_peers 15 --slow_nodes 30 --lowCPU_nodes 10 --txn_mean_time 1 --blk_mean_time 5 --termination_time 1000`
