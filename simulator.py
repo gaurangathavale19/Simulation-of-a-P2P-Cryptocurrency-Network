@@ -30,6 +30,59 @@ def initialize_blockchain(genesis_block):
     blockchain_tree[genesis_block.block_id] = (genesis_block, 1)
     return blockchain_tree # this will also be the candidate block
 
+# Creation of the network topology into an adjacency list
+def create_network_topology(total_nodes):
+        mat = {}
+
+        min1 = 4
+        max1 = min(total_nodes-1, 8)
+
+        for i in range(total_nodes):
+            mat[i] = []
+        start_time = time.time()
+        for i in range(total_nodes):
+
+            peers = random.randint(min1, max1)
+            # print('Peers:', peers)
+            if(len(mat[i]) >= peers):
+                continue
+            set1 = set()
+            if(len(mat[i]) > 0):
+                test = mat[i]
+                for e in test:
+                    set1.add(e)
+            while(len(set1) < peers):
+                if(time.time() - start_time > 1):
+                    return False
+                ans = False
+                if(ans == False):
+                    peer = random.randint(0, total_nodes-1)
+                    while(len(mat[peer]) == 8 or i==peer):
+                        peer = random.randint(0, total_nodes-1)
+                if(peer not in set1):
+                    set1.add(peer)
+            # print(set1)
+            # print(i)
+            # print('Peer:',peer)
+            mat[i] = list(set1)
+            for ele in set1:
+                if(i not in mat[ele]):
+                    list1 = mat[ele]
+                    list1.append(i)
+                    mat[ele] = list1
+
+        # Convert the adjacency list into an adjacency matrix
+        adj_matrix = [[0 for _ in range(total_nodes)] for _ in range(total_nodes)]
+
+        for k,v in mat.items():
+            if(len(v) < 4 or len(v) > 8):
+                # print(len(v))
+                pass
+            for index in v:
+                adj_matrix[k][index] = 1
+        return adj_matrix
+
+
 if __name__ == "__main__":
     then = time.time()
 
@@ -93,58 +146,12 @@ if __name__ == "__main__":
     random.shuffle(computation_powers)
 
     # Creation of the network topology into an adjacency list
-    mat = {}
-
-    min1 = 4
-    max1 = min(total_nodes-1, 8)
-
-    for i in range(total_nodes):
-        mat[i] = []
-
-    for i in range(total_nodes):
-
-        peers = random.randint(min1, max1)
-        # print('Peers:', peers)
-        if(len(mat[i]) >= peers):
-            continue
-        set1 = set()
-        if(len(mat[i]) > 0):
-            test = mat[i]
-            for e in test:
-                set1.add(e)
-        while(len(set1) < peers):
-            ans = False
-            if(ans == False):
-                peer = random.randint(0, total_nodes-1)
-                while(len(mat[peer]) == 8 or i==peer):
-                    peer = random.randint(0, total_nodes-1)
-            if(peer not in set1):
-                set1.add(peer)
-        # print(set1)
-        # print(i)
-        # print('Peer:',peer)
-        mat[i] = list(set1)
-        for ele in set1:
-            if(i not in mat[ele]):
-                list1 = mat[ele]
-                list1.append(i)
-                mat[ele] = list1
-
-    # Convert the adjacency list into an adjacency matrix
-    adj_matrix = [[0 for _ in range(total_nodes)] for _ in range(total_nodes)]
-
-    for k,v in mat.items():
-        if(len(v) < 4 or len(v) > 8):
-            # print(len(v))
-            pass
-        for index in v:
-            adj_matrix[k][index] = 1
-    # print(adj_matrix)
-    for i in adj_matrix:
-        # print(i)
-        pass
-
-    # Comput the hashing power dependeing on the CPU power of the
+    adj_matrix = create_network_topology(total_nodes)
+    while(adj_matrix == False):
+        print("Graph was disconnected! Trying again....")
+        adj_matrix = create_network_topology(total_nodes)
+        
+    # Compute the hashing power depending on the CPU power of the
     hashing_power_list = []
 
     for i in range(total_nodes):
