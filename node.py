@@ -11,6 +11,18 @@ class Node:
     # speed: slow = 0, fast = 1
     # computation_power: low = 0, high = 1
     def __init__(self, node_id, speed, computation_power, coins, hashing_power, block_inter_arrival_mean_time, transaction_inter_arrival_mean_time, simulator_global_time, next_mining_time):
+        '''
+            -node_id: ID of the current node
+            -speed: Speed of the node i.e. slow/fast - 0/1
+            -computation_power: Computation power of the node i.e. low/high - 0/1
+            -coins: current balance of the node
+            -hashing_power: hashing power of the node
+            -block_inter_arrival_mean_time: Mean interarrival time between blocks 
+            -transaction_inter_arrival_mean_time: Mean interarrival time between transactions
+            -simulator_global_time: Global time of the simulator
+            -next_mining_time: Time at which the next block can be mined
+        '''
+        
         self.node_id = node_id
         self.speed = speed
         self.computation_power = computation_power
@@ -44,6 +56,11 @@ class Node:
 
     # Generate the transaction
     def generate_transaction(self, n, current_time,txn_mean_time):
+        '''
+         -n: total number of nodes in the network
+         -current_time: current time of the simulation
+         -txn_mean_time: Mean interarrival time between transactions
+        '''
 
         # We have the sender node
         sender_id=self.node_id
@@ -67,6 +84,10 @@ class Node:
 
     # Calculate latency between each pair of directly connected nodes
     def calc_latency(self,neighbour,message_len):
+        '''
+            -neighbour: Adjacent nodes to the current node
+            -message_len: Length of the message
+        '''
 
         # Calculate the bottleneck backwidth (c)
         if(self.speed == 1 and neighbour['node'].speed==1):
@@ -89,12 +110,13 @@ class Node:
 
     # Receive transactions 
     def get_transactions(self,current_time,txn):
+        '''
+            -current_time: current time of the simulation
+            -txn: Transaction object
+        '''
         reciever_id=txn.receiver_id
         sender_id=txn.sender_id
         message_len=8192 
-        # for key,value in self.visited_transactions.items():
-        #     if key==txn.transaction_id:
-        #         return []
         txnid=txn.transaction_id
         self.visited_transactions[txnid]=1
         new_events_generated=[]
@@ -112,6 +134,10 @@ class Node:
 
     # Generate blocks
     def generate_block(self, simulator_global_time, event):
+        '''
+            -simulator_global_time: Global time of the simulator
+            -event: object of the event
+        '''
         if self.next_mining_time != event.event_start_time: # need to analyze this once
         # if self.next_mining_time != event.event_start_time: # need to analyze this once
             self.next_mining_time = simulator_global_time + np.random.exponential(self.block_inter_arrival_mean_time/self.hashing_power) # need to analyze this once
@@ -176,6 +202,10 @@ class Node:
         return self.broadcast_block(simulator_global_time, block, events)
 
     def receive_block(self, simulator_global_time, block):
+        '''
+            -simulator_global_time: Global time of the simulator
+            -block: object of the block
+        '''
         
         # Check if the block is seen earlier - to avoid loop
         if block.block_id in self.blocks:
@@ -223,6 +253,11 @@ class Node:
         return self.broadcast_block(simulator_global_time, block, event_list=[])
 
     def broadcast_block(self, simulator_global_time, block, event_list):
+        '''
+            -simulator_global_time: Global time of the simulator
+            -block: object of the block
+            -event_list: List of all events
+        '''
         for peer in self.neighbours:
             # Check if the node has already seen this block
             if peer['node'].node_id not in block.peers_visited:
@@ -234,6 +269,9 @@ class Node:
         return event_list
 
     def verify_block(self, block):
+        '''
+            -block: object of the block - This block is to be verified
+        '''
         block_transactions = block.transaction_list
         previous_block = self.blockchain_tree[block.previous_block_hash][0]
         previous_peer_balance = copy.deepcopy(previous_block.peer_balance)

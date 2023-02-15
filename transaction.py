@@ -1,6 +1,13 @@
 import hashlib
 class Transaction:
     def __init__(self, sender_id, receiver_id, coins, transaction_type, timestamp):
+        '''
+            -sender_id: ID of the sender node
+            -receiver_id: ID of the receiver node
+            -coins: Amount (in BTC) to be transferred
+            -transaction_type: Type of transaction i.e. payment/mines/init
+            -timestamp: creatio time of the transaction
+        '''
         self.sender_id = sender_id
         self.receiver_id = receiver_id
         self.coins = coins
