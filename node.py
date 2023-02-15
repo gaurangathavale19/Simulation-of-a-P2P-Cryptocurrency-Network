@@ -42,44 +42,53 @@ class Node:
         self.block_arrival_timing={}
         self.generated_blocks = set()
 
-     
+    # Generate the transaction
     def generate_transaction(self, n, current_time,txn_mean_time):
-        # print(current_time)
+
+        # We have the sender node
         sender_id=self.node_id
+
+        # Find the receiver such that sender and receiver are not the same
         receiver_id = random.randint(0,n-1)
         while(sender_id == receiver_id):
             receiver_id = random.randint(0,n-1)
-        
+
+        # Allocate some amount based on the balance in sender's account
         coins = random.randint(1,self.coins)
+
+        # Create the generated event time based on current time + random exponential distribution with mean as txn_mean_time (Ttx)
         exp_time = np.random.exponential(txn_mean_time)
-        # print('Exp_time:', exp_time)
-        generated_event_time = exp_time + current_time  #todo
-        # print('Transaction generation delta:', current_time)
+        generated_event_time = exp_time + current_time
+
+        # Create a transaction object and add it into an event, which will be further added to the event queue (global_queue)
         txn=Transaction(sender_id,receiver_id,coins,"payment",generated_event_time)
         event=Event(self,"TXN",txn,sender_id,receiver_id,generated_event_time)
         return event
 
+    # Calculate latency between each pair of directly connected nodes
     def calc_latency(self,neighbour,message_len):
+
+        # Calculate the bottleneck backwidth (c)
         if(self.speed == 1 and neighbour['node'].speed==1):
             c = 100 * 10**6
         else:
             c = 5 * 10**6
-       
-        # m = len(message)
 
-        # d from exponential dist with mean 96/c
-        
+        # Calculate d from exponential distribution with mean 96kbits/c
         mean = 96 * 10**3 / c
         d = np.random.exponential(mean)
 
+        # Calculate propagation delay (p)
         p = neighbour['propagation_delay']
+
+        # Calculate final latency with the given formula
         latency=p+message_len/c+d
 
-        # print('Latency from ' + str(sender_id) + ' to ' + str(receiver_id) + ':', latency)
         return round(latency,2)
+    
 
+    # Receive transactions 
     def get_transactions(self,current_time,txn):
-        # print('inside get_transaction')
         reciever_id=txn.receiver_id
         sender_id=txn.sender_id
         message_len=8192 
@@ -101,32 +110,24 @@ class Node:
 
         return new_events_generated
 
-
-
-    
+    # Generate blocks
     def generate_block(self, simulator_global_time, event):
-        # print('INSIDE GENERATE_BLOCK')
-        # print(s)
         if self.next_mining_time != event.event_start_time: # need to analyze this once
         # if self.next_mining_time != event.event_start_time: # need to analyze this once
             self.next_mining_time = simulator_global_time + np.random.exponential(self.block_inter_arrival_mean_time/self.hashing_power) # need to analyze this once
             return [Event(curr_node=self.node_id, type="BLK", event_data=None, sender_id=self.node_id, receiver_id="all", event_start_time=self.next_mining_time)]
             # return []
         events = []
-        # print(self.hashing_power)
+
+        # Calculate the interarrival time between block with exponential random distribution using block interarrival mean time and hashing power
         exp_time = np.random.exponential(self.block_inter_arrival_mean_time/self.hashing_power)
-        # print('Mining exp_time:', exp_time)
-        # print(simulator_global_time)
         self.next_mining_time = simulator_global_time + exp_time # need to analyze this once
-        # print('Next_mining_time:', self.next_mining_time)
-        # print('above global_simulator_time:', simulator_global_time)
-        # print('above next_mining time:', self.next_mining_time)
-        # print('Transaction generation:', self.next_mining_time)
         valid_txns = []
         parent_block = self.longest_chain
         parent_peer_balance = copy.deepcopy(parent_block['block'].peer_balance)
-        # print(peer_balance)
+        
         to_be_deleted = []
+        # Check for valid transactions and add it to valid_transactions
         for txn_id, txn  in self.unverified_txn.items():
             if(txn.transaction_type=='payment'):
                 if (parent_peer_balance[txn.sender_id] >= txn.coins):
@@ -134,34 +135,47 @@ class Node:
                     parent_peer_balance[txn.receiver_id] += txn.coins
                     valid_txns.append(txn)
                     to_be_deleted.append(txn_id)
-                    # del self.unverfied_transactions[txn_id]
             else:
                 parent_peer_balance[txn.to_id] += txn.coins
                 valid_txns.append(txn)
                 to_be_deleted.append(txn_id)
-                # del self.unverfied_transactions[txn_id]
+            
+            # Since one block can have atmost 1000 transactions i.e. 999 regular transactions and 1 coinbase(mandatory) transaction
             if len(valid_txns) == 999: # 1000th Transaction would be added as mining reward
                 break
+        
         self.verified_transactions += valid_txns
-        # print(parent_peer_balance)
-        # print('VALID:', len(valid_txns))
+        
+        # Delete valid transactions from the unverified transactions list
         for i in to_be_deleted:
             del self.unverified_txn[i]
+        
+        # Add the mandatory coinbas transaction
         valid_txns.append(Transaction(sender_id="coinbase", receiver_id=self.node_id, coins=50, transaction_type="mines", timestamp=simulator_global_time)) # mining reward is 50
+        
+        # Update the peer balance by applying the coinbase transaction to the peer balance of the miner
         parent_peer_balance[self.node_id] += 50
+
+        # Create the blocks with above details
         block = Block(creator_id=self.node_id , creation_time=event.event_start_time, peer_balance=parent_peer_balance, transaction_list=valid_txns, previous_block_hash=parent_block['block'].block_id) # need to understand creation_time=event.event_start_time
         self.generated_blocks.add(block.block_id)
-        # print(block.peer_balance)
         block.peers_visited.append(self.node_id)
+
+        # Create a block event 
         events.append(Event(curr_node=self.node_id, type="BLK", event_data=None, sender_id=self.node_id, receiver_id="all", event_start_time=self.next_mining_time))
+        
+        # Update the blockchain tree by adding the above block to the blockchain tree
         self.blockchain_tree[block.block_id] = (block, parent_block['length']+1)
+
+        # Update the longest chain and maintain the block arrival timings
         self.longest_chain = {'block': block, 'length': parent_block['length']+1}
         self.block_arrival_timing[block.block_id] = simulator_global_time
         self.blocks.add(block.block_id)
+
+        # Broadcast the blocks to the miner's peers
         return self.broadcast_block(simulator_global_time, block, events)
 
     def receive_block(self, simulator_global_time, block):
-        # print('inside receive block')
         
         # Check if the block is seen earlier - to avoid loop
         if block.block_id in self.blocks:
@@ -169,12 +183,8 @@ class Node:
         
         self.blocks.add(block.block_id)
         block.peers_visited.append(self.node_id)
-        # print(block)
 
         previous_block_hash = block.previous_block_hash
-
-        # print(previous_block_hash)
-        # print(self.blockchain_tree.keys())
 
         # Check if the incoming block's previous_hash is present in the blockchain tree
         if previous_block_hash not in self.blockchain_tree.keys():
@@ -182,24 +192,19 @@ class Node:
             self.unverified_blocks[block.block_id] = block
         else:
             # Check the validity of blocks, if verified, then:
-            ans = self.verify_block(block) 
-            # print(ans)
-            if ans:
-                # Add it to the blockchain tree
+            if self.verify_block(block):
+                # Since the block is verified, add the block to the blockchain tree and update the longest chain length
                 self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
                 self.block_arrival_timing[block.block_id] = simulator_global_time
-                # print(self.blockchain_tree)
 
-                # Update longest chain
+                # Update the longest chain if new block added changes the longest chain length
                 if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
                     self.longest_chain['block'] = block
                     self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
 
         unverified_block_flag = True
-        # print(self.unverified_blocks)
 
         while(unverified_block_flag and len(self.unverified_blocks)!=0):
-            # print(self.unverified_blocks)
             for unverified_block_id, unverified_block in self.unverified_blocks.items():
                 if(unverified_block.previous_block_hash in self.blockchain_tree.keys()):
                     if self.verify_block(unverified_block):
@@ -213,16 +218,14 @@ class Node:
                         break
 
                 unverified_block_flag = False
-            #print('stuck')
         
         # Broadcast the blocks - to the node's peers
         return self.broadcast_block(simulator_global_time, block, event_list=[])
 
     def broadcast_block(self, simulator_global_time, block, event_list):
-        # print('inside broadcast:', simulator_global_time)
         for peer in self.neighbours:
+            # Check if the node has already seen this block
             if peer['node'].node_id not in block.peers_visited:
-                # print(block.block_id, block.peers_visited)
                 delay = peer['propagation_delay']
                 bottleneck_bandwidth = peer['bottleneck_bandwidth']
                 delay += (8*1000*len(block.transaction_list)/(bottleneck_bandwidth * 10**6)) # in seconds
@@ -239,21 +242,15 @@ class Node:
         # For each transaction in the block, check if the sender's balance >= transaction amount (Using the parent/prev block's peer_balance)
         for transaction in block_transactions:
             if(transaction.transaction_type == 'payment'):
-                # if(previous_peer_balance1[transaction.sender_id] < transaction.coins):
-                #     return False
-                # else:
                 previous_peer_balance[transaction.sender_id] -= transaction.coins
                 previous_peer_balance[transaction.receiver_id] += transaction.coins
             else:
-                # print(transaction.coins)
                 previous_peer_balance[transaction.receiver_id] += transaction.coins
-        
-        # print(previous_peer_balance)
+
+        # For validity, check for each node if the peer_balance after applying the transactions in the blocks in non-zero
         for node_id, balance in previous_peer_balance.items():
             if(balance < 0):
                 return False
-        
-        
         
         # Check whether the peer_balance after applying transactions on previous_peer_balance is same as the one provided in the incoming block
         if block.peer_balance != previous_peer_balance:      
@@ -264,24 +261,16 @@ class Node:
             self.verified_transactions.append(transaction)
             if transaction.transaction_id in self.unverified_txn.keys():
                 del self.unverified_txn[transaction.transaction_id]
-        
-        # Since the block is verified, add the block to the blockchain tree and update the longest chain length
-        # self.blockchain_tree[block.block_id] = (block, self.blockchain_tree[block.previous_block_hash][1] + 1)
-
-        # Update the longest chain if new block added changes the longest chain length
-        # if(self.longest_chain['length'] < self.blockchain_tree[block.block_id][1]):
-        #     self.longest_chain['block'] = block
-        #     self.longest_chain['length'] = self.blockchain_tree[block.block_id][1]
-
         return True
     
     def get_count_of_generated_blocks_in_longest_blockchain(self):
         count = 0
         last_block_in_blockchain_tree = copy.deepcopy(self.longest_chain['block'])
         while(last_block_in_blockchain_tree.previous_block_hash != 0):
-            # print(self.generated_blocks)
+            # Check if the cuurent miner created the current block in the longest blockchain tree, and increase the count
             if(last_block_in_blockchain_tree.block_id in self.generated_blocks):
                 count += 1
+            # Change the pointer to the it's parent until we reach the genesis block
             last_block_in_blockchain_tree = self.blockchain_tree[last_block_in_blockchain_tree.previous_block_hash][0]
         return count
 
@@ -296,24 +285,19 @@ class Node:
         node_counter = 0
         id_to_count = {}
 
-        # print(self.blockchain_tree)
-
         for block_id,(block,_) in self.blockchain_tree.items():
             previous_block_hash=block.previous_block_hash
             block_map.setdefault(previous_block_hash,{})[block_id]=block
 
-
         g.attr(rankdir='LR',splines='line')
         while not hash_queue.empty():
             size=hash_queue.qsize()
-            # t=Graph('child')
             
             for i in range(size):
                 parent_hash = hash_queue.get()
                 parent_hash_dict=block_map[parent_hash]
                 for id,block in parent_hash_dict.items():
                     node_counter_str=str(node_counter)
-                    # node_counter_str=str(block.block_id[:4])
                     if(node_counter==0):
                         g.node("G")
                         id_to_count[id]="G"
@@ -330,5 +314,4 @@ class Node:
                     else:
                         g.node('G')
                     node_counter=node_counter+1
-            # g.subgraph(t)
         g.render(folder + '/results/'+str(self.node_id),view=False) 
