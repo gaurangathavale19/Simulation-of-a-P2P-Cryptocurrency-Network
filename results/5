@@ -1,0 +1,6 @@
+graph parent {
+	rankdir=LR splines=line
+	subgraph child {
+		0
+	}
+}
