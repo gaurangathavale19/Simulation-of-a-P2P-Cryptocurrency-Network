@@ -5,7 +5,7 @@
 - Run the code with the following command-line arguments:
   - <b>n_peers</b>: Number of peers
   - <b>slow_nodes</b>: Percetage of slow nodes/peers
-  - <b>lowCPU_nnodes</b>: Percentage of low CPU nodes/peers
+  - <b>lowCPU_nodes</b>: Percentage of low CPU nodes/peers
   - <b>txn_mean_time</b>: Mean interarrival time between transactions
   - <b>blk_mean_time</b>: Mean interarrival time between blocks
   - <b>terminations_time</b>: The time after which the simulation will come to an halt
