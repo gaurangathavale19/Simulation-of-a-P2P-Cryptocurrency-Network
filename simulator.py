@@ -83,6 +83,22 @@ def create_network_topology(total_nodes):
                 adj_matrix[k][index] = 1
         return adj_matrix
 
+def is_graph_connected(adj_matrix):
+    n = len(adj_matrix)
+    visited = [False] * n
+
+    def DFS(node):
+        visited[node] = True
+        for i in range(n):
+            if adj_matrix[node][i] == 1 and visited[i] == False:
+                DFS(i)
+
+    for i in range(n):
+        if visited[i] == False:
+            DFS(i)
+            break
+        
+    return all(visited)
 
 if __name__ == "__main__":
     then = time.time()
